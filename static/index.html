@@ -1,0 +1,1539 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Desktopia Lab — Motor de Digitalización & IA</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script>
+tailwind.config = {
+  darkMode: 'class',
+  theme: {
+    extend: {
+      fontFamily: { sans: ['Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'] },
+      colors: {
+        zinc: { 750: '#232328', 850: '#1c1c21', 900: '#141417', 950: '#0c0c0e' }
+      }
+    }
+  }
+}
+</script>
+<style>
+body { background-color: #0c0c0e; color: #e4e4e7; font-family: 'Inter', sans-serif; letter-spacing: -0.01em; }
+.panel-surface { background: rgba(20, 20, 23, 0.75); backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.07); }
+.panel-surface-elevated { background: rgba(28, 28, 33, 0.92); backdrop-filter: blur(24px); border: 1px solid rgba(255, 255, 255, 0.1); }
+.slider-thumb::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 32px;
+  height: 32px;
+  background: #18181b;
+  border: 2px solid #10b981;
+  border-radius: 50%;
+  cursor: ew-resize;
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.15), 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-thumb { background: #27272a; border-radius: 3px; }
+@keyframes toastIn { from { transform: translateY(12px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+@keyframes toastOut { from { transform: translateY(0); opacity: 1; } to { transform: translateY(12px); opacity: 0; } }
+.toast-enter { animation: toastIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+.toast-exit { animation: toastOut 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
+
+/* Visor con Pan-and-Zoom dinámico a bordes */
+.zoom-container { position: relative; overflow: hidden; cursor: default; }
+.zoom-content { transition: transform 0.15s cubic-bezier(0.16, 1, 0.3, 1); transform-origin: 0 0; will-change: transform; }
+.zoom-container.lupa-activa { cursor: grab; }
+.zoom-container.lupa-activa:active { cursor: grabbing; }
+
+/* Modal recorte con Guías y Cruz de Alta Precisión */
+#crop-modal { display: none; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.92); backdrop-filter: blur(8px); z-index: 1000; justify-content: center; align-items: center; }
+#crop-modal.active { display: flex; }
+.crop-container { position: relative; display: inline-block; margin: 0 auto; cursor: crosshair; touch-action: none; }
+.crop-image { display: block; max-width: 100%; max-height: 60vh; user-select: none; -webkit-user-drag: none; pointer-events: none; }
+.crop-overlay { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.65); pointer-events: none; }
+
+/* Cruz y Líneas Guía Dinámicas */
+.crop-guide-h { position: absolute; left: 0; right: 0; height: 1px; background: rgba(16, 185, 129, 0.55); pointer-events: none; z-index: 15; box-shadow: 0 0 6px rgba(16, 185, 129, 0.4); }
+.crop-guide-v { position: absolute; top: 0; bottom: 0; width: 1px; background: rgba(16, 185, 129, 0.55); pointer-events: none; z-index: 15; box-shadow: 0 0 6px rgba(16, 185, 129, 0.4); }
+.crop-crosshair-center { position: absolute; width: 20px; height: 20px; border: 1.5px solid rgba(255, 255, 255, 0.9); border-radius: 50%; pointer-events: none; transform: translate(-50%, -50%); z-index: 16; box-shadow: 0 0 10px rgba(0,0,0,0.8); }
+.crop-crosshair-center::after { content: ''; position: absolute; top: 50%; left: 50%; width: 4px; height: 4px; background: #10b981; border-radius: 50%; transform: translate(-50%, -50%); }
+.crop-coord-badge { position: absolute; z-index: 20; transform: translate(-50%, -100%); background: rgba(12, 12, 14, 0.9); color: #e4e4e7; border: 1px solid rgba(255, 255, 255, 0.15); border-radius: 6px; padding: 2px 7px; font-size: 10px; font-family: monospace; pointer-events: none; white-space: nowrap; box-shadow: 0 4px 12px rgba(0,0,0,0.6); }
+
+/* Recuadro de Selección y Regla de Tercios */
+.crop-selection { position: absolute; border: 1.5px solid #10b981; background: rgba(16, 185, 129, 0.08); cursor: move; touch-action: none; z-index: 10; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55); }
+.crop-grid-third { position: absolute; pointer-events: none; }
+.crop-grid-third.h-third { top: 33.33%; bottom: 33.33%; left: 0; right: 0; border-top: 1px dashed rgba(255, 255, 255, 0.25); border-bottom: 1px dashed rgba(255, 255, 255, 0.25); }
+.crop-grid-third.v-third { left: 33.33%; right: 33.33%; top: 0; bottom: 0; border-left: 1px dashed rgba(255, 255, 255, 0.25); border-right: 1px dashed rgba(255, 255, 255, 0.25); }
+
+/* Handles táctiles optimizados para dedo y mouse */
+.crop-handle { position: absolute; width: 10px; height: 10px; background: #10b981; border: 2px solid #ffffff; border-radius: 50%; z-index: 12; touch-action: none; box-shadow: 0 1px 4px rgba(0,0,0,0.5); }
+.crop-handle::before { content: ''; position: absolute; inset: -10px; }
+.crop-handle.tl { top: -5px; left: -5px; cursor: nw-resize; }
+.crop-handle.tr { top: -5px; right: -5px; cursor: ne-resize; }
+.crop-handle.bl { bottom: -5px; left: -5px; cursor: sw-resize; }
+.crop-handle.br { bottom: -5px; right: -5px; cursor: se-resize; }
+.crop-handle.t { top: -5px; left: 50%; transform: translateX(-50%); cursor: n-resize; }
+.crop-handle.b { bottom: -5px; left: 50%; transform: translateX(-50%); cursor: s-resize; }
+.crop-handle.l { top: 50%; left: -5px; transform: translateY(-50%); cursor: w-resize; }
+.crop-handle.r { top: 50%; right: -5px; transform: translateY(-50%); cursor: e-resize; }
+
+/* Zona drop global */
+#dropzone-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 500;
+  background: rgba(12, 12, 14, 0.88);
+  backdrop-filter: blur(12px);
+  border: 2px dashed #10b981;
+  pointer-events: none;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+#dropzone-overlay.active { display: flex; }
+</style>
+</head>
+<body class="min-h-screen flex flex-col antialiased overflow-x-hidden">
+
+<div id="toast-container" class="fixed bottom-4 sm:bottom-6 right-4 sm:right-6 z-[300] flex flex-col gap-2 pointer-events-none max-w-[90vw]"></div>
+
+<!-- OVERLAY DRAG & DROP -->
+<div id="dropzone-overlay">
+  <div class="w-16 h-16 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 mb-4 animate-bounce">
+    <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+  </div>
+  <h3 class="text-lg font-semibold text-white tracking-tight">Soltá las fotos aquí</h3>
+  <p class="text-xs text-zinc-400 mt-1">Se importarán automáticamente al lote activo y se procesarán con IA.</p>
+</div>
+
+<!-- HEADER / NAV -->
+<nav class="panel-surface sticky top-0 z-40 px-3.5 sm:px-6 py-2.5 sm:py-3.5 flex justify-between items-center shadow-lg border-b border-zinc-800/80 w-full">
+  <div class="flex items-center gap-2.5 sm:gap-3.5">
+    <div class="w-8 h-8 rounded-lg bg-zinc-800 border border-zinc-700/60 flex items-center justify-center text-zinc-200 shrink-0">
+      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"/><circle cx="12" cy="13" r="3"/></svg>
+    </div>
+    <div>
+      <h1 class="text-xs sm:text-sm font-semibold tracking-tight text-zinc-100 flex items-center gap-1.5">
+        Desktopia<span class="text-emerald-400">Lab</span>
+        <span class="text-[9px] sm:text-[10px] font-mono uppercase bg-zinc-800/90 text-zinc-400 px-1.5 py-0.2 rounded border border-zinc-700/50">Core</span>
+      </h1>
+      <p class="text-[10px] sm:text-[11px] text-zinc-400 hidden sm:block">Motor de Digitalización & Restauración IA</p>
+    </div>
+  </div>
+  
+  <div class="flex items-center gap-2 sm:gap-2.5">
+    <!-- BOTÓN CONECTAR CELULAR / QR -->
+    <button onclick="abrirModalCelular()" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium bg-zinc-850 hover:bg-zinc-800 text-zinc-300 border border-zinc-700/70 transition-all flex items-center gap-1.5 shadow-sm" title="Vincular teléfono móvil por Wi-Fi">
+      <svg class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+      <span class="hidden sm:inline">Móvil</span>
+    </button>
+
+    <!-- BOTÓN ESTADÍSTICAS -->
+    <button onclick="abrirEstadisticas()" class="px-2.5 sm:px-3.5 py-1.5 rounded-lg text-xs font-medium bg-zinc-850 hover:bg-zinc-800 text-zinc-300 border border-zinc-700/70 transition-all flex items-center gap-1.5 sm:gap-2 shadow-sm">
+      <svg class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+      <span class="hidden sm:inline">Estadísticas</span>
+    </button>
+    
+    <!-- BADGE DE ESTADO DEL NAS (OPCIÓN 3) -->
+    <div id="nas-status-badge" onclick="verificarEstadoNAS(true)" class="cursor-pointer px-2 sm:px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-medium bg-zinc-900 border border-zinc-800 flex items-center gap-1.5 transition-all" title="Verificar estado de conexión con el NAS">
+      <span id="nas-dot" class="w-1.5 h-1.5 rounded-full bg-zinc-500"></span>
+      <span id="nas-texto" class="hidden sm:inline text-zinc-400">NAS...</span>
+    </div>
+
+    <!-- BADGE DE SESIÓN -->
+    <div id="status-badge" class="px-2.5 sm:px-3 py-1 rounded-full text-[11px] sm:text-xs font-medium bg-zinc-900 text-zinc-400 border border-zinc-800 flex items-center gap-1.5">
+      <span class="w-1.5 h-1.5 rounded-full bg-zinc-500"></span>
+      <span class="hidden sm:inline">Inactivo</span>
+    </div>
+
+    <!-- BOTÓN APAGAR SERVIDOR -->
+    <button onclick="pedirApagarServidor()" class="px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium bg-red-950/40 hover:bg-red-900/50 text-red-300 border border-red-900/60 hover:border-red-700/60 transition-all flex items-center gap-1.5 shadow-sm active:scale-95" title="Apagar el servidor de Desktopia Lab y cerrar todos los procesos">
+      <svg class="w-3.5 h-3.5 text-red-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5.636 5.636a9 9 0 1012.728 0M12 3v9"/></svg>
+      <span class="hidden sm:inline">Apagar</span>
+    </button>
+  </div>
+</nav>
+
+<main class="container mx-auto px-3 sm:px-4 py-5 sm:py-8 max-w-5xl flex-grow w-full flex flex-col">
+  <!-- PANTALLA INICIAL (NUEVA SESIÓN) -->
+  <div id="pantalla-inicio" class="panel-surface w-full rounded-2xl p-6 sm:p-10 my-auto shadow-2xl">
+    <div class="max-w-xl">
+      <h2 class="text-lg sm:text-xl font-semibold text-white tracking-tight">Iniciar Sesión de Digitalización</h2>
+      <p class="text-zinc-400 text-xs mt-1 leading-relaxed">Configurá el operador y el álbum histórico. Las imágenes procesadas se guardarán temporalmente y podrán transferirse al NAS.</p>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5 my-6 sm:my-8">
+      <div class="space-y-1.5">
+        <label class="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">Operador</label>
+        <input type="text" id="operador" placeholder="Nombre del operador" class="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-3.5 py-2.5 text-sm focus:border-zinc-600 focus:ring-1 focus:ring-zinc-600 outline-none transition-all placeholder:text-zinc-600">
+      </div>
+      <div class="space-y-1.5">
+        <label class="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">Nombre del Álbum</label>
+        <input type="text" id="nombre_lote" placeholder="Identificador del álbum" class="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-3.5 py-2.5 text-sm focus:border-zinc-600 focus:ring-1 focus:ring-zinc-600 outline-none transition-all placeholder:text-zinc-600">
+      </div>
+      <div class="space-y-1.5">
+        <label class="text-[11px] font-semibold text-zinc-400 uppercase tracking-wider">Año / Fecha Histórica</label>
+        <input type="text" id="fecha_historica" placeholder="Ej: 1978" class="w-full bg-zinc-950 border border-zinc-800 text-white rounded-xl px-3.5 py-2.5 text-sm focus:border-zinc-600 focus:ring-1 focus:ring-zinc-600 outline-none transition-all placeholder:text-zinc-600">
+      </div>
+    </div>
+    <button onclick="iniciarLote()" class="w-full sm:w-auto bg-zinc-100 hover:bg-white text-zinc-900 font-semibold py-3 sm:py-2.5 px-6 rounded-xl text-xs uppercase tracking-wider transition-all shadow-sm flex items-center justify-center gap-2">
+      <span>Comenzar Sesión</span>
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+    </button>
+  </div>
+
+  <!-- PANTALLA DE TRABAJO -->
+  <div id="pantalla-trabajo" class="hidden flex-col gap-5 sm:gap-6 w-full">
+    
+    <!-- PANEL DE CONTROL RESPONSIVE -->
+    <div class="panel-surface w-full rounded-2xl p-4 sm:p-5 flex flex-col gap-4 shadow-xl border border-zinc-800/80">
+      
+      <!-- Fila 1: Info lote + contador + botón cancelar -->
+      <div class="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-zinc-800/60">
+        <div>
+          <p id="info-lote" class="text-xs sm:text-sm font-semibold text-zinc-100 tracking-tight"></p>
+          <div class="hidden sm:flex items-center gap-2 text-[11px] text-zinc-400 mt-1 font-mono">
+            <span>Atajos:</span>
+            <kbd class="px-1.5 py-0.5 rounded bg-zinc-850 text-zinc-300 border border-zinc-700 text-[10px]">1</kbd><span>Total</span>
+            <kbd class="px-1.5 py-0.5 rounded bg-zinc-850 text-zinc-300 border border-zinc-700 text-[10px]">2</kbd><span>4x</span>
+            <kbd class="px-1.5 py-0.5 rounded bg-zinc-850 text-zinc-300 border border-zinc-700 text-[10px]">3</kbd><span>Facial</span>
+            <span class="text-zinc-600">|</span>
+            <kbd class="px-1.5 py-0.5 rounded bg-zinc-850 text-emerald-400 border border-zinc-700 text-[10px]">A</kbd><span>Aprobar</span>
+            <kbd class="px-1.5 py-0.5 rounded bg-zinc-850 text-zinc-300 border border-zinc-700 text-[10px]">D</kbd><span>Descartar</span>
+            <kbd class="px-1.5 py-0.5 rounded bg-zinc-850 text-zinc-300 border border-zinc-700 text-[10px]">R</kbd><span>Rotar</span>
+          </div>
+        </div>
+        
+        <div class="flex items-center gap-2">
+          <div class="bg-zinc-950 border border-zinc-800/80 px-3 py-1.5 rounded-xl flex items-center gap-2">
+            <span class="text-[10px] sm:text-[11px] text-zinc-400 uppercase font-semibold tracking-wider">Aprobadas</span>
+            <span id="contador-aprobadas" class="text-sm font-bold text-emerald-400 font-mono">0</span>
+          </div>
+          <button onclick="pedirCancelarLote()" class="px-2.5 sm:px-3 py-1.5 rounded-xl text-xs font-medium text-zinc-400 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all">Cancelar</button>
+        </div>
+      </div>
+
+      <!-- Fila 2: Acciones Principales Adaptativas -->
+      <div class="flex flex-wrap items-center justify-between gap-2.5 w-full">
+        <!-- Opciones secundarias (DPI y Test) -->
+        <div class="flex items-center gap-2 w-full sm:w-auto">
+          <div class="bg-zinc-950 border border-zinc-800/80 px-2.5 py-1.5 rounded-xl flex items-center gap-1.5 grow sm:grow-0">
+            <select id="selector-dpi" class="bg-transparent text-zinc-300 text-xs outline-none cursor-pointer w-full">
+              <option value="600" class="bg-zinc-900">600 DPI</option>
+              <option value="300" selected class="bg-zinc-900">300 DPI</option>
+              <option value="150" class="bg-zinc-900">150 DPI</option>
+            </select>
+          </div>
+          <button onclick="procesarEscaneo(true)" class="px-3 py-2 rounded-xl text-xs font-medium bg-zinc-850 hover:bg-zinc-800 text-zinc-300 border border-zinc-750 transition-all grow sm:grow-0">Simulador</button>
+        </div>
+
+        <!-- Acciones Principales (Importar, Escanear, Enviar a NAS) -->
+        <div class="flex items-center gap-2 w-full sm:w-auto">
+          
+          <!-- BOTÓN IMPORTAR ARCHIVOS DIRECTO (EJEMPLO 1) -->
+          <input type="file" id="input-archivo-subir" multiple accept="image/*" class="hidden" onchange="subirFotosDirectas(event)">
+          <button onclick="document.getElementById('input-archivo-subir').click()" class="flex-1 sm:flex-initial px-3.5 py-2.5 sm:py-2 rounded-xl text-xs font-semibold bg-zinc-850 hover:bg-zinc-800 text-zinc-200 border border-zinc-700/70 transition-all shadow-sm flex items-center justify-center gap-1.5" title="Importar fotos desde carpeta o pendrive">
+            <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v12m0-12l4 4m-4-4L8 8"/></svg>
+            <span>Importar</span>
+          </button>
+
+          <!-- BOTÓN ESCANEAR CON HARDWARE -->
+          <button onclick="procesarEscaneo(false)" class="flex-1 sm:flex-initial px-4 py-2.5 sm:py-2 rounded-xl text-xs font-semibold bg-zinc-100 hover:bg-white text-zinc-950 transition-all shadow-sm flex items-center justify-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+            <span>Escanear</span>
+          </button>
+
+          <!-- BOTÓN ENVIAR A NAS -->
+          <button onclick="pedirEnviarNAS()" class="flex-1 sm:flex-initial px-4 py-2.5 sm:py-2 rounded-xl text-xs font-semibold bg-emerald-600 hover:bg-emerald-500 text-white transition-all shadow-sm flex items-center justify-center gap-1.5">
+            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/></svg>
+            <span>Al NAS</span>
+          </button>
+        </div>
+
+      </div>
+    </div>
+    
+    <!-- GALERÍA DE TARJETAS -->
+    <div id="galeria" class="w-full flex flex-col gap-6 sm:gap-8 pb-12"></div>
+  </div>
+</main>
+
+<!-- MODAL VINCULAR MÓVIL POR QR / IP -->
+<div id="modal-celular" onclick="if(event.target===this) cerrarModalCelular()" class="hidden fixed inset-0 z-[260] flex items-center justify-center bg-black/85 backdrop-blur-md p-4">
+  <div class="panel-surface-elevated rounded-2xl p-6 sm:p-7 w-full max-w-sm text-center shadow-2xl border border-zinc-800">
+    <div class="flex justify-between items-center mb-4">
+      <h3 class="text-sm font-semibold text-white tracking-tight flex items-center gap-2">
+        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
+        <span>Conectar Dispositivo Móvil</span>
+      </h3>
+      <button onclick="cerrarModalCelular()" class="text-zinc-400 hover:text-white text-xl leading-none">&times;</button>
+    </div>
+    <p class="text-zinc-400 text-xs mb-5 leading-relaxed text-left">Escaneá este código con la cámara de tu celular conectado a la misma red Wi-Fi para operar Desktopia Lab:</p>
+    
+    <div id="qr-container" class="flex justify-center items-center my-4 p-3 bg-white rounded-2xl mx-auto w-fit shadow-xl border border-zinc-200">
+      <img id="qr-img" src="" alt="Código QR Desktopia Lab" class="w-48 h-48 block rounded-lg select-none" />
+    </div>
+    
+    <div class="bg-zinc-950 border border-zinc-800 rounded-xl p-2.5 my-4 flex items-center justify-between gap-2">
+      <span id="url-movil" class="text-xs font-mono text-zinc-300 truncate select-all"></span>
+      <button onclick="copiarUrlMovil()" class="px-2.5 py-1 rounded-lg bg-zinc-800 hover:bg-zinc-750 text-zinc-200 text-xs font-medium transition-all shrink-0">Copiar</button>
+    </div>
+    
+    <button onclick="cerrarModalCelular()" class="w-full bg-zinc-850 hover:bg-zinc-800 text-zinc-300 py-2.5 rounded-xl text-xs font-semibold transition-all border border-zinc-750">Cerrar</button>
+  </div>
+</div>
+
+<!-- PANTALLA SERVIDOR APAGADO (OVERLAY GLOBAL) -->
+<div id="pantalla-apagada" class="hidden fixed inset-0 z-[600] bg-zinc-950/95 backdrop-blur-xl flex flex-col items-center justify-center p-6 text-center">
+  <div class="w-16 h-16 rounded-2xl bg-red-500/10 border border-red-500/20 flex items-center justify-center mb-5 text-red-400 shadow-2xl">
+    <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5.636 5.636a9 9 0 1012.728 0M12 3v9"/></svg>
+  </div>
+  <h2 class="text-xl font-bold text-white tracking-tight mb-2">Desktopia Lab se ha detenido</h2>
+  <p class="text-zinc-400 text-xs sm:text-sm max-w-md mb-6 leading-relaxed">El servidor local y los motores de IA han sido apagados con éxito. La memoria y los puertos quedaron liberados. Ya podés cerrar esta pestaña con seguridad.</p>
+  <div class="p-4 bg-zinc-900 border border-zinc-800 rounded-2xl max-w-sm w-full text-left text-xs text-zinc-400 mb-6 font-mono space-y-1.5 shadow-lg">
+    <p class="text-zinc-200 font-semibold mb-2 flex items-center gap-2">
+      <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+      <span>Para volver a iniciar:</span>
+    </p>
+    <p class="text-zinc-300">1. Hacé clic en el acceso directo del escritorio</p>
+    <p class="text-zinc-300">2. O ejecutá: <span class="text-emerald-400">./iniciar_desktopia.sh</span></p>
+  </div>
+  <button onclick="window.location.reload()" class="px-5 py-2.5 bg-zinc-850 hover:bg-zinc-800 text-zinc-200 text-xs font-semibold rounded-xl border border-zinc-750 transition-all flex items-center gap-2 shadow-sm">
+    <svg class="w-3.5 h-3.5 text-zinc-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+    <span>Reconectar</span>
+  </button>
+</div>
+
+<!-- MODAL CONFIRMAR -->
+<div id="custom-confirm-modal" class="hidden fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+  <div class="panel-surface-elevated rounded-2xl p-6 w-full max-w-sm text-center shadow-2xl">
+    <h3 id="confirm-title" class="text-base font-semibold text-white tracking-tight mb-1.5"></h3>
+    <p id="confirm-message" class="text-zinc-400 text-xs mb-6 leading-relaxed"></p>
+    <div class="flex gap-2.5">
+      <button id="btn-confirm-cancel" class="flex-1 bg-zinc-850 hover:bg-zinc-800 text-zinc-300 py-2.5 rounded-xl border border-zinc-700/60 text-xs font-medium transition-all">Volver</button>
+      <button id="btn-confirm-ok" class="flex-1 py-2.5 rounded-xl text-xs font-semibold transition-all"></button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL ESTADÍSTICAS SAAS -->
+<div id="stats-modal" class="hidden fixed inset-0 z-[250] flex items-center justify-center bg-black/80 backdrop-blur-sm p-3 sm:p-4">
+  <div class="panel-surface-elevated rounded-2xl p-5 sm:p-7 w-full max-w-3xl shadow-2xl max-h-[90vh] overflow-y-auto">
+    <div class="flex justify-between items-center mb-5 pb-3 border-b border-zinc-800">
+      <div>
+        <h3 class="text-sm sm:text-base font-semibold text-white tracking-tight">Métricas de Digitalización</h3>
+        <p class="text-xs text-zinc-400 mt-0.5">Desglose de aprobaciones por modelo de Inteligencia Artificial aplicado.</p>
+      </div>
+      <button onclick="cerrarEstadisticas()" class="text-zinc-400 hover:text-white text-2xl leading-none w-8 h-8 rounded-lg flex items-center justify-center hover:bg-zinc-800 transition-all">&times;</button>
+    </div>
+    <div id="stats-contenido" class="text-xs text-zinc-300">Cargando datos...</div>
+  </div>
+</div>
+
+<!-- MODAL RECORTE -->
+<div id="crop-modal">
+  <div class="panel-surface-elevated rounded-2xl p-4 sm:p-6 max-w-4xl w-full mx-3 sm:mx-4 shadow-2xl border border-zinc-800 flex flex-col max-h-[92vh]">
+    <div class="flex justify-between items-center mb-3 shrink-0">
+      <div>
+        <h3 class="text-sm font-semibold text-white tracking-tight flex items-center gap-2">
+          <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M3 12h18M3 18h18"/></svg>
+          <span>Herramienta de Recorte y Encuadre</span>
+        </h3>
+        <p class="text-zinc-400 text-xs mt-0.5">Arrastrá con el dedo o mouse para definir el área. Las líneas guía te ayudan a encuadrar.</p>
+      </div>
+      <button onclick="cerrarModalRecorte()" class="text-zinc-400 hover:text-white text-2xl leading-none w-8 h-8 rounded-lg flex items-center justify-center hover:bg-zinc-800 transition-all shrink-0">&times;</button>
+    </div>
+    
+    <div class="relative bg-zinc-950 rounded-xl overflow-hidden flex justify-center items-center mb-4 border border-zinc-850 grow min-h-[260px] max-h-[62vh] select-none" style="touch-action: none;">
+      <div id="crop-container" class="crop-container relative inline-block select-none" style="touch-action: none;">
+        <img id="crop-image" src="" class="crop-image block max-w-full max-h-[60vh] object-contain select-none" style="touch-action: none;" />
+        <div id="crop-overlay" class="crop-overlay"></div>
+        
+        <!-- Líneas guía y cruz dinámica -->
+        <div id="crop-guide-h" class="crop-guide-h hidden"></div>
+        <div id="crop-guide-v" class="crop-guide-v hidden"></div>
+        <div id="crop-crosshair-center" class="crop-crosshair-center hidden"></div>
+        <div id="crop-coord-badge" class="crop-coord-badge hidden"></div>
+
+        <div id="crop-selection" class="crop-selection" style="display: none; touch-action: none;">
+          <!-- Regla de tercios visual -->
+          <div class="crop-grid-third h-third"></div>
+          <div class="crop-grid-third v-third"></div>
+          
+          <!-- 8 handles táctiles -->
+          <div class="crop-handle tl" data-handle="tl"></div>
+          <div class="crop-handle tr" data-handle="tr"></div>
+          <div class="crop-handle bl" data-handle="bl"></div>
+          <div class="crop-handle br" data-handle="br"></div>
+          <div class="crop-handle t" data-handle="t"></div>
+          <div class="crop-handle b" data-handle="b"></div>
+          <div class="crop-handle l" data-handle="l"></div>
+          <div class="crop-handle r" data-handle="r"></div>
+        </div>
+      </div>
+    </div>
+    
+    <div id="crop-actions-bar" class="flex flex-col sm:flex-row gap-2 shrink-0">
+      <button id="btn-aplicar-recorte" onclick="aplicarRecorte()" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 sm:py-2 rounded-xl text-xs font-semibold transition-all shadow-sm flex items-center justify-center gap-1.5">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+        <span>Aplicar Recorte</span>
+      </button>
+      <button id="btn-extraer" onclick="extraerFotoNueva()" class="flex-1 bg-zinc-850 hover:bg-zinc-800 text-zinc-200 py-2.5 sm:py-2 rounded-xl text-xs font-medium border border-zinc-700/60 transition-all flex items-center justify-center gap-1.5">
+        <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+        <span>Extraer como foto nueva</span>
+      </button>
+      <button onclick="cerrarModalRecorte()" class="sm:w-28 bg-zinc-800 hover:bg-zinc-750 text-zinc-300 py-2.5 sm:py-2 rounded-xl text-xs font-medium border border-zinc-700/60 transition-all">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script src="/static/js/qr.js"></script>
+<script>
+var tarjetaHoverActiva = null;
+
+function mostrarToast(mensaje, tipo) {
+  tipo = tipo || 'success';
+  var container = document.getElementById('toast-container');
+  var toast = document.createElement('div');
+  var dotColor = {
+    success: 'bg-emerald-400',
+    error: 'bg-red-400',
+    info: 'bg-indigo-400'
+  }[tipo] || 'bg-zinc-400';
+  
+  toast.className = 'toast-enter flex items-center gap-2.5 px-4 py-2.5 rounded-xl font-medium shadow-2xl border border-zinc-800 bg-zinc-900/95 backdrop-blur-md text-xs text-zinc-200';
+  toast.innerHTML = '<span class="w-1.5 h-1.5 rounded-full ' + dotColor + '"></span><span>' + mensaje + '</span>';
+  container.appendChild(toast);
+  setTimeout(function() { 
+    toast.classList.replace('toast-enter', 'toast-exit'); 
+    setTimeout(function() { toast.remove(); }, 200); 
+  }, 3500);
+}
+
+function confirmarAccion(titulo, mensaje, textoBoton, esPeligroso, callback, textoCancel) {
+  document.getElementById('confirm-title').innerText = titulo;
+  document.getElementById('confirm-message').innerText = mensaje;
+  var btnOk = document.getElementById('btn-confirm-ok');
+  btnOk.innerText = textoBoton;
+  btnOk.className = esPeligroso 
+    ? 'flex-1 bg-red-600/90 hover:bg-red-500 text-white py-2.5 rounded-xl text-xs font-semibold transition-all'
+    : 'flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-2.5 rounded-xl text-xs font-semibold transition-all';
+  var modal = document.getElementById('custom-confirm-modal');
+  modal.classList.remove('hidden');
+  btnOk.onclick = function() { modal.classList.add('hidden'); callback(); };
+  document.getElementById('btn-confirm-cancel').innerText = textoCancel || 'Volver';
+  document.getElementById('btn-confirm-cancel').onclick = function() { modal.classList.add('hidden'); };
+}
+
+// ==========================================
+// VINCULACIÓN MÓVIL POR CÓDIGO QR / IP
+// ==========================================
+async function abrirModalCelular() {
+  var modal = document.getElementById('modal-celular');
+  modal.classList.remove('hidden');
+  var qrContainer = document.getElementById('qr-container');
+  var urlEl = document.getElementById('url-movil');
+  
+  var hostActual = window.location.host;
+  var urlRecomendada = window.location.origin;
+
+  try {
+    var res = await fetch('/api/info-red');
+    if (res.ok) {
+      var data = await res.json();
+      if (data.ips && data.ips.length > 0) {
+        // Si estamos en localhost, sugerimos la primera IP real de la red local
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+          urlRecomendada = 'http://' + data.ips[0] + ':' + data.puerto;
+        }
+      }
+    }
+  } catch(e) {}
+
+  urlEl.innerText = urlRecomendada;
+  var qrImg = document.getElementById('qr-img');
+  if (qrImg) {
+    qrImg.src = '/api/qr.svg?url=' + encodeURIComponent(urlRecomendada) + '&size=220&t=' + Date.now();
+  } else if (typeof QR !== 'undefined' && QR.renderSVG) {
+    qrContainer.innerHTML = QR.renderSVG(urlRecomendada, 208);
+  }
+}
+
+function cerrarModalCelular() {
+  document.getElementById('modal-celular').classList.add('hidden');
+}
+
+function copiarUrlMovil() {
+  var url = document.getElementById('url-movil').innerText;
+  navigator.clipboard.writeText(url).then(function() {
+    mostrarToast('Dirección copiada al portapapeles', 'success');
+  }).catch(function() {
+    mostrarToast('Copiá manualmente: ' + url, 'info');
+  });
+}
+
+// ==========================================
+// RECUPERACIÓN ANTE F5
+// ==========================================
+async function restaurarSesionSiExiste() {
+  try {
+    var res = await fetch('/api/estado-sesion');
+    if (!res.ok) return;
+    var data = await res.json();
+    if (data.album_abierto && data.lote) {
+      document.getElementById('pantalla-inicio').classList.add('hidden');
+      document.getElementById('pantalla-trabajo').classList.remove('hidden');
+      document.getElementById('pantalla-trabajo').classList.add('flex');
+      
+      var op = data.lote.operador || '';
+      var lote = data.lote.nombre_lote || '';
+      var fecha = data.lote.fecha_historica || '';
+      document.getElementById('info-lote').innerText = lote + ' (' + fecha + ') — ' + op;
+      
+      var badge = document.getElementById('status-badge');
+      badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span><span class="text-emerald-400 font-medium">Activo</span>';
+      badge.className = 'px-2.5 sm:px-3 py-1 rounded-full text-xs bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-1.5';
+      
+      document.getElementById('contador-aprobadas').innerText = data.contador_aprobadas || '0';
+      
+      var galeria = document.getElementById('galeria');
+      galeria.innerHTML = '';
+      
+      if (data.fotos && data.fotos.length > 0) {
+        data.fotos.forEach(function(f) {
+          agregarTarjetaAlaWeb(f.base);
+          if (f.tiene_ia) {
+            actualizarTarjetaConIA(f.base, f.caras, f.ia, f.completa, null);
+          } else {
+            marcarTarjetaPendiente(f.base);
+          }
+          if (f.aprobada) {
+            var card = document.getElementById('foto-card-' + f.base);
+            if (card) {
+              card.classList.add('opacity-40', 'pointer-events-none', 'card-aprobada');
+              var st = document.getElementById('status-foto-card-' + f.base);
+              var tipoTexto = 'Original';
+              if (f.aprobada.includes('_completa')) tipoTexto = 'Restauración Total';
+              else if (f.aprobada.includes('_ia')) tipoTexto = 'Escalado 4x';
+              else if (f.aprobada.includes('_caras')) tipoTexto = 'Mejora Facial';
+              if (st) st.innerHTML = '<span class="text-emerald-400 font-medium">Aprobada (' + tipoTexto + ')</span>';
+            }
+          }
+        });
+      }
+    }
+  } catch(e) {
+    console.error('Error restaurando sesion:', e);
+  }
+}
+
+window.addEventListener('DOMContentLoaded', function() {
+  restaurarSesionSiExiste();
+  verificarEstadoNAS(false);
+});
+
+// ==========================================
+// GESTIÓN DE LOTES
+// ==========================================
+async function iniciarLote() {
+  var op = document.getElementById('operador').value.trim();
+  var lote = document.getElementById('nombre_lote').value.trim();
+  var fecha = document.getElementById('fecha_historica').value.trim();
+  if(!op || !lote || !fecha) return mostrarToast('Completá todos los campos', 'error');
+  try {
+    var res = await fetch('/api/iniciar-lote?operador=' + encodeURIComponent(op) + '&nombre=' + encodeURIComponent(lote) + '&fecha=' + encodeURIComponent(fecha), {method: 'POST'});
+    if(res.ok) {
+      document.getElementById('pantalla-inicio').classList.add('hidden');
+      document.getElementById('pantalla-trabajo').classList.remove('hidden');
+      document.getElementById('pantalla-trabajo').classList.add('flex');
+      document.getElementById('info-lote').innerText = lote + ' (' + fecha + ') — ' + op;
+      var badge = document.getElementById('status-badge');
+      badge.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span><span class="text-emerald-400 font-medium">Activo</span>';
+      badge.className = 'px-2.5 sm:px-3 py-1 rounded-full text-xs bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-1.5';
+      mostrarToast('Sesión iniciada correctamente', 'success');
+    }
+  } catch(e) { mostrarToast('Error al iniciar lote', 'error'); }
+}
+
+var nasConectado = false;
+async function verificarEstadoNAS(notificar) {
+  try {
+    var res = await fetch('/api/estado-nas');
+    var data = await res.json();
+    nasConectado = data.conectado;
+    var badge = document.getElementById('nas-status-badge');
+    var dot = document.getElementById('nas-dot');
+    var texto = document.getElementById('nas-texto');
+    if (data.conectado) {
+      if (badge) badge.className = 'cursor-pointer px-2 sm:px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-medium bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-1.5 transition-all';
+      if (dot) dot.className = 'w-1.5 h-1.5 rounded-full bg-emerald-400';
+      if (texto) { texto.className = 'hidden sm:inline text-emerald-400'; texto.innerText = 'NAS Online'; }
+      if (notificar) mostrarToast('NAS Online (' + data.host + ')', 'success');
+    } else {
+      if (badge) badge.className = 'cursor-pointer px-2 sm:px-2.5 py-1 rounded-full text-[11px] sm:text-xs font-medium bg-red-500/10 border border-red-500/20 flex items-center gap-1.5 transition-all';
+      if (dot) dot.className = 'w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse';
+      if (texto) { texto.className = 'hidden sm:inline text-red-400'; texto.innerText = 'NAS Offline'; }
+      if (notificar) mostrarToast('NAS Offline (' + data.host + ')', 'error');
+    }
+  } catch(e) {
+    nasConectado = false;
+  }
+}
+setInterval(function() { verificarEstadoNAS(false); }, 15000);
+
+function pedirEnviarNAS() {
+  if (!nasConectado) {
+    mostrarToast('Aviso: El NAS parece desconectado. Verificá que esté encendido.', 'error');
+  }
+  var cnt = parseInt(document.getElementById('contador-aprobadas').innerText) || 0;
+  if (cnt === 0) {
+    confirmarAccion('¿Cerrar álbum?', 'No hay fotos aprobadas pendientes. Al cerrar el álbum podrás iniciar uno nuevo.', 'Cerrar álbum', false, cerrarAlbum, 'Volver');
+    return;
+  }
+  confirmarAccion('¿Enviar al NAS?', cnt + ' foto(s) aprobada(s) se transferirán al NAS con metadatos EXIF.', 'Transferir', false, enviarAlNAS, 'Volver');
+}
+
+async function enviarAlNAS() {
+  mostrarToast('Iniciando transferencia a NAS...', 'info');
+  try {
+    var res = await fetch('/api/enviar-lote', {method: 'POST'});
+    var data = await res.json();
+    if (!res.ok) { mostrarToast(data.detail || 'Error en transferencia', 'error'); return; }
+    document.querySelectorAll('.card-aprobada').forEach(function(c) { c.remove(); });
+    document.getElementById('contador-aprobadas').innerText = '0';
+    confirmarAccion('Transferencia completa', data.mensaje + ' El álbum sigue abierto para digitalizar más fotos.', 'Cerrar álbum', false, cerrarAlbum, 'Continuar en el álbum');
+  } catch (e) { mostrarToast('Error de conexión', 'error'); }
+}
+
+async function cerrarAlbum() {
+  try {
+    var res = await fetch('/api/cerrar-lote', {method: 'POST'});
+    var data = await res.json();
+    mostrarToast(data.mensaje || 'Álbum cerrado', res.ok ? 'success' : 'error');
+    if (res.ok) setTimeout(function(){ window.location.reload(); }, 1500);
+  } catch (e) { mostrarToast('Error de conexión', 'error'); }
+}
+
+function pedirCancelarLote() {
+  confirmarAccion('¿Cancelar lote actual?', 'Se descartarán todas las fotos de la sesión activa.', 'Descartar todo', true, async function() {
+    try { await fetch('/api/cancelar-lote', {method: 'POST'}); window.location.reload(); }
+    catch(e) { mostrarToast('Error de conexión', 'error'); }
+  });
+}
+
+// ==========================================
+// APAGAR SERVIDOR Y MATAR PROCESOS
+// ==========================================
+function pedirApagarServidor() {
+  var modal = document.getElementById('custom-confirm-modal');
+  document.getElementById('confirm-title').innerText = 'Apagar Desktopia Lab';
+  
+  var html = '<div class="space-y-3.5 text-left">';
+  html += '<p class="text-zinc-300 text-xs sm:text-sm leading-relaxed">¿Deseás apagar completamente el servidor de Desktopia Lab?</p>';
+  html += '<p class="text-zinc-400 text-xs">Esta acción finalizará el proceso en segundo plano y liberará la tarjeta gráfica (GPU) y la memoria.</p>';
+  html += '<label class="flex items-start gap-2.5 p-3 rounded-xl bg-zinc-950 border border-zinc-800 cursor-pointer hover:border-zinc-700 transition-all">';
+  html += '  <input type="checkbox" id="check-limpiar-apagar" class="mt-0.5 rounded border-zinc-700 text-emerald-500 focus:ring-0">';
+  html += '  <span class="text-xs text-zinc-300 leading-snug">Limpiar fotos de la sesión activa al salir (para no ver fotos anteriores la próxima vez)</span>';
+  html += '</label>';
+  html += '</div>';
+
+  document.getElementById('confirm-message').innerHTML = html;
+
+  var okBtn = document.getElementById('btn-confirm-ok');
+  okBtn.innerText = 'Apagar y Salir';
+  okBtn.className = 'flex-1 py-2.5 rounded-xl text-xs font-semibold bg-red-600 hover:bg-red-500 text-white transition-all shadow-sm';
+  
+  var cancelBtn = document.getElementById('btn-confirm-cancel');
+  cancelBtn.onclick = function() { modal.classList.add('hidden'); };
+
+  okBtn.onclick = async function() {
+    var checkLimpiar = document.getElementById('check-limpiar-apagar');
+    var limpiar = checkLimpiar ? checkLimpiar.checked : false;
+    modal.classList.add('hidden');
+    ejecutarApagarServidor(limpiar);
+  };
+
+  modal.classList.remove('hidden');
+}
+
+async function ejecutarApagarServidor(limpiar) {
+  mostrarToast('Apagando servidor y liberando recursos...', 'info');
+  try {
+    await fetch('/api/apagar-servidor?limpiar_sesion=' + limpiar, { method: 'POST' });
+  } catch(e) {}
+  
+  // Mostrar pantalla global de servidor detenido
+  var overlay = document.getElementById('pantalla-apagada');
+  if (overlay) overlay.classList.remove('hidden');
+}
+
+// ==========================================
+// IMPORTACIÓN DIRECTA DE FOTOS (EJEMPLO 1)
+// ==========================================
+async function subirFotosDirectas(e) {
+  var files = e.target.files;
+  if (!files || !files.length) return;
+  await subirArchivosLista(files);
+  e.target.value = '';
+}
+
+async function subirArchivosLista(fileList) {
+  mostrarToast('Cargando ' + fileList.length + ' foto(s)...', 'info');
+  var formData = new FormData();
+  for (var i = 0; i < fileList.length; i++) {
+    formData.append('archivos', fileList[i]);
+  }
+  
+  try {
+    var res = await fetch('/api/cargar-fotos', {
+      method: 'POST',
+      body: formData
+    });
+    var data = await res.json();
+    if (res.ok && data.fotos_listas && data.fotos_listas.length > 0) {
+      mostrarToast(data.mensaje || 'Fotos importadas', 'success');
+      await procesarLoteDeTarjetasIA(data.fotos_listas);
+    } else {
+      mostrarToast(data.detail || 'Error importando fotos', 'error');
+    }
+  } catch(e) {
+    mostrarToast('Fallo de red al subir fotos', 'error');
+  }
+}
+
+// DRAG & DROP GLOBAL
+var dragCounter = 0;
+window.addEventListener('dragenter', function(e) {
+  e.preventDefault();
+  dragCounter++;
+  document.getElementById('dropzone-overlay').classList.add('active');
+});
+window.addEventListener('dragleave', function(e) {
+  e.preventDefault();
+  dragCounter--;
+  if (dragCounter <= 0) {
+    dragCounter = 0;
+    document.getElementById('dropzone-overlay').classList.remove('active');
+  }
+});
+window.addEventListener('dragover', function(e) { e.preventDefault(); });
+window.addEventListener('drop', async function(e) {
+  e.preventDefault();
+  dragCounter = 0;
+  document.getElementById('dropzone-overlay').classList.remove('active');
+  if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+    await subirArchivosLista(e.dataTransfer.files);
+  }
+});
+
+// ==========================================
+// PIPELINE IA CON COLA VISIBLE
+// ==========================================
+async function procesarLoteDeTarjetasIA(listaBases) {
+  for (var i = 0; i < listaBases.length; i++) {
+    agregarTarjetaAlaWeb(listaBases[i]);
+  }
+
+  for (var i = 0; i < listaBases.length; i++) {
+    var base = listaBases[i];
+    var cardId = 'foto-card-' + base;
+    
+    var statusEl = document.getElementById('status-' + cardId);
+    if(statusEl) {
+      statusEl.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-ping"></span><span class="text-indigo-400 font-medium">Procesando IA (' + (i + 1) + ' de ' + listaBases.length + ')...</span>';
+    }
+    
+    for (var j = i + 1; j < listaBases.length; j++) {
+      var nextSt = document.getElementById('status-foto-card-' + listaBases[j]);
+      if (nextSt && !nextSt.innerText.includes('Listo')) {
+        nextSt.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-zinc-500"></span><span class="text-zinc-500 font-medium">En cola (' + (j + 1) + ' de ' + listaBases.length + ')</span>';
+      }
+    }
+
+    try {
+      var iaRes = await fetch('/api/procesar-ia/' + base, {method: 'POST'});
+      var iaData = await iaRes.json();
+      if (iaData.error) {
+        marcarTarjetaIncompleta(base, iaData.error);
+      } else {
+        if (iaData.auto_rotada) {
+          mostrarToast('Auto-orientación: Foto girada ' + iaData.grados_auto_rotados + '° (rostros detectados)', 'info');
+        }
+        actualizarTarjetaConIA(base, iaData.caras, iaData.ia, iaData.completa, iaData.rostros_detectados, iaData.auto_rotada);
+      }
+    } catch(e) { 
+      marcarTarjetaIncompleta(base, 'Error de conexión');
+    }
+  }
+}
+
+async function reintentarIA(base) {
+  var cardId = 'foto-card-' + base;
+  var statusEl = document.getElementById('status-' + cardId);
+  if(statusEl) {
+    statusEl.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-ping"></span><span class="text-indigo-400 font-medium">Reintentando IA...</span>';
+  }
+  var spinner = document.getElementById('spinner-' + cardId);
+  if (!spinner) {
+    var iaLayer = document.getElementById('ia-layer-' + cardId);
+    if (iaLayer) {
+      iaLayer.insertAdjacentHTML('afterbegin', '<div id="spinner-' + cardId + '" class="flex flex-col items-center gap-2 text-zinc-400"><svg class="w-6 h-6 animate-spin text-indigo-400" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg><span class="text-[11px] font-medium tracking-wide">Procesando...</span></div>');
+    }
+  }
+
+  try {
+    var iaRes = await fetch('/api/procesar-ia/' + base, {method: 'POST'});
+    var iaData = await iaRes.json();
+    if (iaData.error) {
+      marcarTarjetaIncompleta(base, iaData.error);
+    } else {
+      if (iaData.auto_rotada) {
+        mostrarToast('Auto-orientación: Foto girada ' + iaData.grados_auto_rotados + '° (rostros detectados)', 'info');
+      }
+      actualizarTarjetaConIA(base, iaData.caras, iaData.ia, iaData.completa, iaData.rostros_detectados, iaData.auto_rotada);
+      mostrarToast('Restauración completada', 'success');
+    }
+  } catch(e) {
+    marcarTarjetaIncompleta(base, 'Fallo de red');
+  }
+}
+
+function marcarTarjetaIncompleta(base, mensaje) {
+  var cardId = 'foto-card-' + base;
+  var statusEl = document.getElementById('status-' + cardId);
+  if(statusEl) {
+    statusEl.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span><span class="text-amber-400 font-medium">Incompleto</span> <button onclick="reintentarIA(\'' + base + '\')" class="ml-2 text-[10px] font-medium uppercase px-2 py-0.5 rounded bg-amber-500/10 text-amber-300 border border-amber-500/20 hover:bg-amber-500/20 transition-all">Reintentar</button>';
+  }
+  var spinner = document.getElementById('spinner-' + cardId);
+  if(spinner) spinner.remove();
+
+  var botonesDiv = document.getElementById('botones-' + cardId);
+  if (botonesDiv) botonesDiv.classList.remove('opacity-40', 'pointer-events-none');
+}
+
+function marcarTarjetaPendiente(base) {
+  var cardId = 'foto-card-' + base;
+  var statusEl = document.getElementById('status-' + cardId);
+  if(statusEl) {
+    statusEl.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-zinc-400"></span><span class="text-zinc-400 font-medium">Pendiente</span> <button onclick="reintentarIA(\'' + base + '\')" class="ml-2 text-[10px] font-medium uppercase px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700 hover:bg-zinc-750 transition-all">Procesar IA</button>';
+  }
+  var spinner = document.getElementById('spinner-' + cardId);
+  if(spinner) spinner.remove();
+  var botonesDiv = document.getElementById('botones-' + cardId);
+  if (botonesDiv) botonesDiv.classList.remove('opacity-40', 'pointer-events-none');
+}
+
+// ==========================================
+// RENDERIZADO DE TARJETA ADAPTATIVA & TÁCTIL
+// ==========================================
+function agregarTarjetaAlaWeb(base) {
+  var galeria = document.getElementById('galeria');
+  var cardId = 'foto-card-' + base;
+  var containerZoomId = 'zoom-' + cardId;
+  
+  var html = '<div id="' + cardId + '" class="panel-surface w-full p-3.5 sm:p-5 rounded-2xl transition-all duration-300 flex flex-col relative border border-zinc-800/80 shadow-lg" onmouseenter="tarjetaHoverActiva=\'' + base + '\'" onmouseleave="if(tarjetaHoverActiva===\'' + base + '\') tarjetaHoverActiva=null">';
+  
+  // Encabezado de la tarjeta: Estado + Selector de modo
+  html += '<div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 mb-3">';
+  html += '  <div class="flex items-center gap-2">';
+  html += '    <div id="status-' + cardId + '" class="text-xs text-zinc-400 flex items-center gap-2 font-medium tracking-tight">';
+  html += '      <span class="w-1.5 h-1.5 rounded-full bg-zinc-500"></span><span>En espera</span>';
+  html += '    </div>';
+  html += '    <span id="badge-caras-' + cardId + '" class="hidden text-[10px] sm:text-[11px] font-mono font-medium px-2 py-0.5 rounded-md bg-zinc-850 text-zinc-400 border border-zinc-800"></span>';
+  html += '  </div>';
+  
+  // Segmented control responsive para alternar capas
+  html += '  <div id="tabs-modo-' + cardId + '" class="inline-flex p-1 rounded-xl bg-zinc-950/80 border border-zinc-850 opacity-40 pointer-events-none transition-opacity w-full sm:w-auto justify-between sm:justify-start">';
+  html += '    <button id="tab-comp-' + cardId + '" onclick="cambiarCapaComparada(\'' + cardId + '\', \'completa\')" class="flex-1 sm:flex-initial px-2.5 py-1 rounded-lg text-xs font-medium text-zinc-400 hover:text-zinc-200 transition-all flex items-center justify-center gap-1.5">';
+  html += '      <span>Total</span><span class="hidden sm:inline"> (Rostros+4x)</span><kbd class="hidden sm:inline text-[9px] font-mono text-zinc-500 bg-zinc-900 px-1 py-0.2 rounded border border-zinc-800">1</kbd>';
+  html += '    </button>';
+  html += '    <button id="tab-ia-' + cardId + '" onclick="cambiarCapaComparada(\'' + cardId + '\', \'ia\')" class="flex-1 sm:flex-initial px-2.5 py-1 rounded-lg text-xs font-medium text-zinc-400 hover:text-zinc-200 transition-all flex items-center justify-center gap-1.5">';
+  html += '      <span>Solo 4x</span><kbd class="hidden sm:inline text-[9px] font-mono text-zinc-500 bg-zinc-900 px-1 py-0.2 rounded border border-zinc-800">2</kbd>';
+  html += '    </button>';
+  html += '    <button id="tab-caras-' + cardId + '" onclick="cambiarCapaComparada(\'' + cardId + '\', \'caras\')" class="flex-1 sm:flex-initial px-2.5 py-1 rounded-lg text-xs font-medium text-zinc-400 hover:text-zinc-200 transition-all flex items-center justify-center gap-1.5">';
+  html += '      <span>Facial</span><kbd class="hidden sm:inline text-[9px] font-mono text-zinc-500 bg-zinc-900 px-1 py-0.2 rounded border border-zinc-800">3</kbd>';
+  html += '    </button>';
+  html += '  </div>';
+  html += '</div>';
+
+  // Visor con Slider Adaptativo y Soporte Táctil Móvil
+  html += '<div id="' + containerZoomId + '" class="zoom-container relative w-full bg-zinc-950 rounded-xl overflow-hidden mb-3.5 border border-zinc-850 h-[340px] sm:h-[440px] md:h-[520px] select-none" style="touch-action: pan-y;">';
+  html += '  <div class="zoom-content w-full h-full relative flex justify-center items-center pointer-events-none">';
+  
+  // Capa Inferior: Variantes IA
+  html += '    <div id="ia-layer-' + cardId + '" class="absolute inset-0 w-full h-full flex justify-center items-center bg-zinc-950 z-0">';
+  html += '      <div id="spinner-' + cardId + '" class="flex flex-col items-center gap-2.5 text-zinc-400">';
+  html += '        <svg class="w-6 h-6 animate-spin text-zinc-500" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>';
+  html += '        <span class="text-xs font-medium tracking-wide">Procesando...</span>';
+  html += '      </div>';
+  html += '      <img id="img-completa-' + cardId + '" src="" class="hidden w-full h-full object-contain pointer-events-none select-none">';
+  html += '      <img id="img-ia-' + cardId + '" src="" class="hidden w-full h-full object-contain pointer-events-none select-none">';
+  html += '      <img id="img-caras-' + cardId + '" src="" class="hidden w-full h-full object-contain pointer-events-none select-none">';
+  html += '    </div>';
+  
+  // Capa Superior: Original
+  html += '    <div id="top-layer-' + cardId + '" class="absolute inset-0 w-full h-full bg-zinc-950 z-10 pointer-events-none select-none" style="clip-path: inset(0 50% 0 0);">';
+  html += '      <img src="/api/ver-foto/' + base + '_original.png?t=' + Date.now() + '" id="img-top-' + cardId + '" class="w-full h-full object-contain pointer-events-none select-none">';
+  html += '    </div>';
+  html += '  </div>';
+
+  // Botón Lupa 2x para Celular y Escritorio (Solución Definitiva con z-[50] y parada de propagación)
+  html += '  <button id="btn-lupa-' + cardId + '" onpointerdown="event.stopPropagation()" ontouchstart="event.stopPropagation()" onclick="event.stopPropagation(); toggleModoLupa(\'' + cardId + '\')" class="absolute top-2.5 right-2.5 z-[50] pointer-events-auto px-2.5 py-1 bg-zinc-950/85 hover:bg-zinc-850 active:scale-95 text-zinc-200 text-[11px] font-medium rounded-lg border border-zinc-700/70 backdrop-blur-md flex items-center gap-1.5 shadow-md transition-all" title="Activar/desactivar Lupa para inspeccionar">';
+  html += '    <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"/></svg>';
+  html += '    <span id="text-lupa-' + cardId + '">Lupa 2x</span>';
+  html += '  </button>';
+
+  // Badge flotante en modo Lupa
+  html += '  <div id="badge-lupa-' + cardId + '" class="hidden absolute top-2.5 left-2.5 z-[50] bg-indigo-950/90 text-indigo-200 border border-indigo-700/60 px-2.5 py-1 rounded-lg text-[10px] sm:text-[11px] font-medium backdrop-blur-md shadow-lg pointer-events-none flex items-center gap-1.5">';
+  html += '    <span class="w-1.5 h-1.5 rounded-full bg-indigo-400 animate-pulse"></span>';
+  html += '    <span>Lupa Activa • Arrastrá para mover • Tocá Lupa para salir</span>';
+  html += '  </div>';
+
+  // Línea divisoria y manija táctil
+  html += '  <div id="linea-' + cardId + '" class="absolute top-0 bottom-0 w-px bg-zinc-200/90 shadow-[0_0_10px_rgba(255,255,255,0.4)] z-20 pointer-events-none" style="left: 50%;">';
+  html += '    <div class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-6 h-6 rounded-full bg-zinc-900 border border-zinc-500 shadow-lg flex items-center justify-center">';
+  html += '      <svg class="w-3 h-3 text-zinc-300" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8 9l-4 3 4 3m8-6l4 3-4 3"/></svg>';
+  html += '    </div>';
+  html += '  </div>';
+
+  // Slider accesible (invisible y sin bloquear eventos)
+  html += '  <input type="range" id="slider-' + cardId + '" min="0" max="100" value="50" disabled class="sr-only" style="pointer-events: none;" oninput="actualizarSlider(\'' + cardId + '\', this.value)">';
+  
+  // Badges esquinas
+  html += '  <div class="absolute bottom-2.5 left-2.5 z-20 bg-zinc-950/80 backdrop-blur-md px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-medium text-zinc-300 border border-white/5 pointer-events-none">Original</div>';
+  html += '  <div id="label-modo-' + cardId + '" class="absolute bottom-2.5 right-2.5 z-20 bg-zinc-950/80 backdrop-blur-md px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-medium text-emerald-400 border border-white/5 pointer-events-none">Restauración Total</div>';
+  html += '</div>';
+
+  // BARRA DE ACCIONES ADAPTATIVA (MÓVIL Y DESKTOP)
+  html += '<div id="botones-' + cardId + '" class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2.5 w-full opacity-40 pointer-events-none transition-opacity duration-300">';
+  
+  // Fila Herramientas: Rotar, Recortar, Lupa y Descartar en móvil
+  html += '  <div class="flex items-center justify-between sm:justify-start gap-2 w-full sm:w-auto">';
+  html += '    <button id="btn-girar-' + cardId + '" onclick="girarFoto(\'' + base + '\', \'' + cardId + '\')" class="flex-1 sm:flex-initial px-3 py-2.5 sm:py-2 bg-zinc-850 hover:bg-zinc-800 text-zinc-300 border border-zinc-750 rounded-xl font-medium text-xs transition-all flex items-center justify-center gap-1.5 shadow-xs" title="Rotar 90° horario (R)">';
+  html += '      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>';
+  html += '      <span>Rotar</span><kbd class="hidden sm:inline text-[9px] font-mono text-zinc-500">R</kbd>';
+  html += '    </button>';
+  html += '    <button id="btn-recortar-' + cardId + '" onclick="abrirModalRecorte(\'' + base + '\', \'' + cardId + '\')" class="flex-1 sm:flex-initial px-3 py-2.5 sm:py-2 bg-zinc-850 hover:bg-zinc-800 text-zinc-300 border border-zinc-750 rounded-xl font-medium text-xs transition-all flex items-center justify-center gap-1.5 shadow-xs">';
+  html += '      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 6h18M3 12h18M3 18h18"/></svg>';
+  html += '      <span>Recortar</span>';
+  html += '    </button>';
+  html += '    <button id="btn-lupa-bar-' + cardId + '" onclick="toggleModoLupa(\'' + cardId + '\')" class="flex-1 sm:flex-initial px-3 py-2.5 sm:py-2 bg-zinc-850 hover:bg-zinc-800 text-zinc-300 border border-zinc-750 rounded-xl font-medium text-xs transition-all flex items-center justify-center gap-1.5 shadow-xs" title="Activar/desactivar Lupa para explorar bordes">';
+  html += '      <svg class="w-3.5 h-3.5 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"/></svg>';
+  html += '      <span id="text-lupa-bar-' + cardId + '">Lupa</span>';
+  html += '    </button>';
+  html += '    <button id="btn-deshacer-' + cardId + '" onclick="deshacerEdicion(\'' + base + '\', \'' + cardId + '\')" class="px-3 py-2 bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/20 rounded-xl font-medium text-xs transition-all" style="display:none;">Deshacer</button>';
+  
+  // Botón Descartar en Mobile (junto a herramientas)
+  html += '    <button onclick="descartarBase(\'' + base + '\', \'' + cardId + '\')" class="sm:hidden px-3 py-2.5 text-zinc-400 hover:text-red-400 hover:bg-red-500/10 font-medium text-xs rounded-xl border border-zinc-800 transition-all flex items-center justify-center" title="Descartar">';
+  html += '      <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>';
+  html += '    </button>';
+  html += '  </div>';
+  
+  // Bloque Aprobaciones
+  html += '  <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">';
+  
+  // 1. APROBAR COMPLETA (PRIMARIO DESTACADO, ANCHO COMPLETO EN CELULAR)
+  html += '    <button id="btn-aprob-comp-' + cardId + '" onclick="aprobarFoto(\'' + base + '_completa.png\', \'' + cardId + '\', \'Restauración Total\')" class="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 active:scale-[0.98] text-white font-medium text-xs px-4 py-2.5 sm:py-2 rounded-xl border border-emerald-500/40 shadow-xs transition-all flex items-center justify-center gap-1.5">';
+  html += '      <span>Aprobar Total</span>';
+  html += '      <span class="text-[10px] text-emerald-200/80 font-normal sm:hidden">(Recomendado)</span>';
+  html += '      <kbd class="hidden sm:inline text-[9px] font-mono bg-emerald-700/80 text-emerald-100 px-1 py-0.2 rounded">A</kbd>';
+  html += '    </button>';
+
+  // Aprobaciones secundarias (3 columnas en móvil)
+  html += '    <div class="grid grid-cols-3 sm:flex sm:items-center gap-1.5 sm:gap-2">';
+  
+  // 2. SOLO 4X
+  html += '      <button id="btn-aprob-ia-' + cardId + '" onclick="aprobarFoto(\'' + base + '_ia.png\', \'' + cardId + '\', \'Solo 4x\')" class="bg-zinc-850 hover:bg-zinc-800 active:scale-[0.98] text-zinc-200 font-medium text-xs px-2.5 py-2 rounded-xl border border-zinc-750 transition-all flex items-center justify-center gap-1 shadow-xs">';
+  html += '        <span>Solo 4x</span><kbd class="hidden sm:inline text-[9px] font-mono text-zinc-400 bg-zinc-900 px-1 py-0.2 rounded border border-zinc-800">I</kbd>';
+  html += '      </button>';
+
+  // 3. SOLO FACIAL
+  html += '      <button id="btn-aprob-caras-' + cardId + '" onclick="aprobarFoto(\'' + base + '_caras.png\', \'' + cardId + '\', \'Solo Facial\')" class="bg-zinc-850 hover:bg-zinc-800 active:scale-[0.98] text-zinc-200 font-medium text-xs px-2.5 py-2 rounded-xl border border-zinc-750 transition-all flex items-center justify-center gap-1 shadow-xs">';
+  html += '        <span>Facial</span><kbd class="hidden sm:inline text-[9px] font-mono text-zinc-400 bg-zinc-900 px-1 py-0.2 rounded border border-zinc-800">C</kbd>';
+  html += '      </button>';
+
+  // 4. ORIGINAL
+  html += '      <button id="btn-aprob-orig-' + cardId + '" onclick="aprobarFoto(\'' + base + '_original.png\', \'' + cardId + '\', \'Original\')" class="bg-zinc-850 hover:bg-zinc-800 active:scale-[0.98] text-zinc-300 font-medium text-xs px-2.5 py-2 rounded-xl border border-zinc-750 transition-all flex items-center justify-center gap-1 shadow-xs">';
+  html += '        <span>Original</span><kbd class="hidden sm:inline text-[9px] font-mono text-zinc-400 bg-zinc-900 px-1 py-0.2 rounded border border-zinc-800">O</kbd>';
+  html += '      </button>';
+  html += '    </div>';
+
+  // 5. DESCARTAR (Desktop)
+  html += '    <button id="btn-descartar-' + cardId + '" onclick="descartarBase(\'' + base + '\', \'' + cardId + '\')" class="hidden sm:flex text-zinc-400 hover:text-red-400 hover:bg-red-500/10 font-medium text-xs px-2.5 py-2 rounded-xl border border-transparent hover:border-red-500/20 transition-all items-center gap-1.5" title="Descartar foto (D)">';
+  html += '      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>';
+  html += '      <kbd class="text-[9px] font-mono text-zinc-500">D</kbd>';
+  html += '    </button>';
+
+  html += '  </div>';
+  html += '</div></div>';
+
+  galeria.insertAdjacentHTML('afterbegin', html);
+  habilitarControlTactil(cardId);
+}
+
+// CONTROL TÁCTIL, LUPA DINÁMICA A BORDES Y SLIDER
+function toggleModoLupa(cardId) {
+  var container = document.getElementById('zoom-' + cardId);
+  if (!container) return;
+  var content = container.querySelector('.zoom-content');
+  var badge = document.getElementById('badge-lupa-' + cardId);
+  var btnTop = document.getElementById('btn-lupa-' + cardId);
+  var textTop = document.getElementById('text-lupa-' + cardId);
+  var btnBar = document.getElementById('btn-lupa-bar-' + cardId);
+  var textBar = document.getElementById('text-lupa-bar-' + cardId);
+  var estaActiva = container.classList.contains('lupa-activa');
+
+  if (estaActiva) {
+    container.classList.remove('lupa-activa');
+    if (content) content.style.transform = 'translate(0, 0) scale(1)';
+    if (badge) badge.classList.add('hidden');
+    if (textTop) textTop.innerText = 'Lupa 2x';
+    if (textBar) textBar.innerText = 'Lupa';
+    if (btnTop) btnTop.className = 'absolute top-2.5 right-2.5 z-[50] pointer-events-auto px-2.5 py-1 bg-zinc-950/85 hover:bg-zinc-850 active:scale-95 text-zinc-200 text-[11px] font-medium rounded-lg border border-zinc-700/70 backdrop-blur-md flex items-center gap-1.5 shadow-md transition-all';
+    if (btnBar) btnBar.className = 'flex-1 sm:flex-initial px-3 py-2.5 sm:py-2 bg-zinc-850 hover:bg-zinc-800 text-zinc-300 border border-zinc-750 rounded-xl font-medium text-xs transition-all flex items-center justify-center gap-1.5 shadow-xs';
+    mostrarToast('Lupa desactivada (Vista 1x)', 'info');
+  } else {
+    container.classList.add('lupa-activa');
+    if (content) {
+      content.style.transformOrigin = '0 0';
+      content.style.transform = 'translate(-25%, -25%) scale(2.2)';
+    }
+    if (badge) badge.classList.remove('hidden');
+    if (textTop) textTop.innerText = 'Salir 1x';
+    if (textBar) textBar.innerText = 'Salir 1x';
+    if (btnTop) btnTop.className = 'absolute top-2.5 right-2.5 z-[50] pointer-events-auto px-2.5 py-1 bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white text-[11px] font-semibold rounded-lg border border-indigo-400 backdrop-blur-md flex items-center gap-1.5 shadow-lg transition-all';
+    if (btnBar) btnBar.className = 'flex-1 sm:flex-initial px-3 py-2.5 sm:py-2 bg-indigo-600 hover:bg-indigo-500 text-white border border-indigo-400 rounded-xl font-semibold text-xs transition-all flex items-center justify-center gap-1.5 shadow-md';
+    if (navigator.vibrate) navigator.vibrate(25);
+    mostrarToast('Lupa 2.2x activa: arrastrá con el dedo para recorrer bordes y rostros', 'success');
+  }
+}
+
+function habilitarControlTactil(cardId) {
+  var container = document.getElementById('zoom-' + cardId);
+  if (!container) return;
+  var content = container.querySelector('.zoom-content');
+  
+  var scaleLupa = 2.2;
+  var startX = 0, startY = 0;
+  var arrastrandoSlider = false;
+  var arrastrandoLupa = false;
+
+  function moverLupa(clientX, clientY) {
+    if (!content) return;
+    var rect = container.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return;
+    var fx = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    var fy = Math.max(0, Math.min(1, (clientY - rect.top) / rect.height));
+    var tx = -fx * (scaleLupa - 1) * 100;
+    var ty = -fy * (scaleLupa - 1) * 100;
+    content.style.transformOrigin = '0 0';
+    content.style.transform = 'translate(' + tx.toFixed(2) + '%, ' + ty.toFixed(2) + '%) scale(' + scaleLupa + ')';
+  }
+
+  function actualizarDesdePosicion(clientX) {
+    var r = container.getBoundingClientRect();
+    if (r.width <= 0) return;
+    var x = clientX - r.left;
+    var pct = Math.max(0, Math.min(100, (x / r.width) * 100));
+    actualizarSlider(cardId, pct);
+    var sl = document.getElementById('slider-' + cardId);
+    if (sl) sl.value = pct;
+  }
+
+  // 1. GESTIÓN INTELIGENTE DE TOQUES (NUNCA ATRAPA EL SCROLL VERTICAL DEL CELULAR)
+  container.addEventListener('pointerdown', function(e) {
+    // Si toca cualquier botón, jamás iniciar slider ni arrastre
+    if (e.target.closest('button') || e.target.closest('.pointer-events-auto')) {
+      return;
+    }
+    var esLupa = container.classList.contains('lupa-activa');
+    startX = e.clientX;
+    startY = e.clientY;
+
+    if (esLupa) {
+      arrastrandoLupa = true;
+      try { container.setPointerCapture(e.pointerId); } catch(err) {}
+      moverLupa(e.clientX, e.clientY);
+    } else {
+      arrastrandoSlider = false;
+    }
+  });
+
+  container.addEventListener('pointermove', function(e) {
+    var esLupa = container.classList.contains('lupa-activa');
+    if (esLupa) {
+      if (arrastrandoLupa || e.pointerType === 'mouse') {
+        moverLupa(e.clientX, e.clientY);
+      }
+      return;
+    }
+
+    // Modo Normal (1x): Desambiguación horizontal vs vertical
+    var dx = e.clientX - startX;
+    var dy = e.clientY - startY;
+
+    if (!arrastrandoSlider) {
+      if (e.buttons > 0 || e.pointerType === 'touch') {
+        // Si el usuario desliza verticalmente, NO bloqueamos el scroll del navegador
+        if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 7) {
+          return;
+        }
+        // Si el usuario desliza horizontalmente de forma clara, activamos el slider comparador
+        if (Math.abs(dx) > Math.abs(dy) + 5 && Math.abs(dx) > 8) {
+          arrastrandoSlider = true;
+          try { container.setPointerCapture(e.pointerId); } catch(err) {}
+        }
+      }
+    }
+
+    if (arrastrandoSlider) {
+      actualizarDesdePosicion(e.clientX);
+    }
+  });
+
+  container.addEventListener('pointerup', function(e) {
+    arrastrandoSlider = false;
+    arrastrandoLupa = false;
+    try { container.releasePointerCapture(e.pointerId); } catch(err) {}
+  });
+
+  container.addEventListener('pointercancel', function(e) {
+    arrastrandoSlider = false;
+    arrastrandoLupa = false;
+  });
+
+  // 2. DOBLE TOQUE (DOUBLE TAP) EN MÓVILES
+  var ultimoTap = 0;
+  container.addEventListener('touchend', function(e) {
+    var ahora = Date.now();
+    var delta = ahora - ultimoTap;
+    if (delta > 40 && delta < 340) {
+      e.preventDefault();
+      // Si la lupa está activa, salir; si no, alternar comparador
+      if (container.classList.contains('lupa-activa')) {
+        toggleModoLupa(cardId);
+      } else {
+        alternarDobleToque(cardId);
+      }
+      ultimoTap = 0;
+    } else {
+      ultimoTap = ahora;
+    }
+  });
+}
+
+function alternarDobleToque(cardId) {
+  if (navigator.vibrate) navigator.vibrate(25);
+  var slider = document.getElementById('slider-' + cardId);
+  var valorActual = slider ? parseFloat(slider.value) : 50;
+  var nuevoValor = (valorActual < 50) ? 100 : 0;
+  
+  animarSlider(cardId, valorActual, nuevoValor);
+  if (slider) slider.value = nuevoValor;
+  mostrarToast(nuevoValor === 100 ? 'Mostrando: Original' : 'Mostrando: Restauración Total', 'info');
+}
+
+function animarSlider(cardId, de, a) {
+  var duracion = 180;
+  var inicio = performance.now();
+  function paso(ahora) {
+    var progreso = Math.min(1, (ahora - inicio) / duracion);
+    var t = 1 - Math.pow(1 - progreso, 3);
+    var valor = de + (a - de) * t;
+    actualizarSlider(cardId, valor);
+    if (progreso < 1) {
+      requestAnimationFrame(paso);
+    } else {
+      actualizarSlider(cardId, a);
+    }
+  }
+  requestAnimationFrame(paso);
+}
+
+function actualizarSlider(cardId, valor) {
+  var topLayer = document.getElementById('top-layer-' + cardId);
+  var linea = document.getElementById('linea-' + cardId);
+  if (topLayer) topLayer.style.clipPath = 'inset(0 ' + (100 - valor) + '% 0 0)';
+  if (linea) linea.style.left = valor + '%';
+}
+
+function cambiarCapaComparada(cardId, modo) {
+  var imgComp = document.getElementById('img-completa-' + cardId);
+  var imgIA = document.getElementById('img-ia-' + cardId);
+  var imgCaras = document.getElementById('img-caras-' + cardId);
+
+  var tabComp = document.getElementById('tab-comp-' + cardId);
+  var tabIA = document.getElementById('tab-ia-' + cardId);
+  var tabCaras = document.getElementById('tab-caras-' + cardId);
+
+  var labelModo = document.getElementById('label-modo-' + cardId);
+  var linea = document.getElementById('linea-' + cardId);
+
+  if (imgComp) imgComp.classList.add('hidden');
+  if (imgIA) imgIA.classList.add('hidden');
+  if (imgCaras) imgCaras.classList.add('hidden');
+
+  var inactivoClass = 'flex-1 sm:flex-initial px-2.5 py-1 rounded-lg text-xs font-medium text-zinc-400 hover:text-zinc-200 transition-all flex items-center justify-center gap-1.5';
+  var activoClass = 'flex-1 sm:flex-initial px-2.5 py-1 rounded-lg text-xs font-semibold bg-zinc-800 text-zinc-100 shadow-sm border border-zinc-700/60 transition-all flex items-center justify-center gap-1.5';
+
+  if (tabComp) tabComp.className = inactivoClass;
+  if (tabIA) tabIA.className = inactivoClass;
+  if (tabCaras) tabCaras.className = inactivoClass;
+
+  if (modo === 'completa') {
+    if (imgComp) imgComp.classList.remove('hidden');
+    if (tabComp) tabComp.className = activoClass;
+    if (labelModo) {
+      labelModo.innerText = 'Restauración Total';
+      labelModo.className = 'absolute bottom-2.5 right-2.5 z-20 bg-zinc-950/80 backdrop-blur-md px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-medium text-emerald-400 border border-white/5 pointer-events-none';
+    }
+    if (linea) linea.className = 'absolute top-0 bottom-0 w-px bg-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.5)] z-20 pointer-events-none';
+  } else if (modo === 'ia') {
+    if (imgIA) imgIA.classList.remove('hidden');
+    if (tabIA) tabIA.className = activoClass;
+    if (labelModo) {
+      labelModo.innerText = 'Escalado 4x';
+      labelModo.className = 'absolute bottom-2.5 right-2.5 z-20 bg-zinc-950/80 backdrop-blur-md px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-medium text-indigo-400 border border-white/5 pointer-events-none';
+    }
+    if (linea) linea.className = 'absolute top-0 bottom-0 w-px bg-indigo-400 shadow-[0_0_10px_rgba(99,102,241,0.5)] z-20 pointer-events-none';
+  } else if (modo === 'caras') {
+    if (imgCaras) imgCaras.classList.remove('hidden');
+    if (tabCaras) tabCaras.className = activoClass;
+    if (labelModo) {
+      labelModo.innerText = 'Mejora Facial';
+      labelModo.className = 'absolute bottom-2.5 right-2.5 z-20 bg-zinc-950/80 backdrop-blur-md px-2 py-0.5 rounded text-[10px] sm:text-[11px] font-medium text-cyan-400 border border-white/5 pointer-events-none';
+    }
+    if (linea) linea.className = 'absolute top-0 bottom-0 w-px bg-cyan-400 shadow-[0_0_10px_rgba(34,211,238,0.5)] z-20 pointer-events-none';
+  }
+}
+
+function actualizarTarjetaConIA(base, nombreCaras, nombreIA, nombreCompleta, rostrosDetectados, autoRotada) {
+  var cardId = 'foto-card-' + base;
+  var spinner = document.getElementById('spinner-' + cardId);
+  if (spinner) spinner.remove();
+
+  if (autoRotada) {
+    refrescarImagenesTarjeta(base, cardId);
+  }
+
+  var ts = Date.now();
+  var imgComp = document.getElementById('img-completa-' + cardId);
+  var imgIA = document.getElementById('img-ia-' + cardId);
+  var imgCaras = document.getElementById('img-caras-' + cardId);
+
+  var btnAprobComp = document.getElementById('btn-aprob-comp-' + cardId);
+  var btnAprobIA = document.getElementById('btn-aprob-ia-' + cardId);
+  var btnAprobCaras = document.getElementById('btn-aprob-caras-' + cardId);
+
+  if (imgComp) {
+    imgComp.onerror = function() {
+      this.onerror = null;
+      this.src = '/api/ver-foto/' + base + '_ia.png?t=' + Date.now();
+    };
+    imgComp.src = '/api/ver-foto/' + (nombreCompleta || (base + '_completa.png')) + '?t=' + ts;
+  }
+
+  if (nombreIA) {
+    if (imgIA) imgIA.src = '/api/ver-foto/' + base + '_ia.png?t=' + ts;
+  } else if (btnAprobIA) {
+    btnAprobIA.disabled = true;
+    btnAprobIA.classList.add('opacity-30', 'pointer-events-none');
+  }
+
+  if (nombreCaras) {
+    if (imgCaras) imgCaras.src = '/api/ver-foto/' + base + '_caras.png?t=' + ts;
+  } else if (btnAprobCaras) {
+    btnAprobCaras.disabled = true;
+    btnAprobCaras.classList.add('opacity-30', 'pointer-events-none');
+  }
+
+  // Badge de rostros detectados
+  if (rostrosDetectados !== null && rostrosDetectados !== undefined) {
+    var badgeCaras = document.getElementById('badge-caras-' + cardId);
+    if (badgeCaras) {
+      badgeCaras.classList.remove('hidden');
+      if (rostrosDetectados > 0) {
+        badgeCaras.innerText = rostrosDetectados + (rostrosDetectados === 1 ? ' rostro detectado' : ' rostros detectados');
+        badgeCaras.className = 'text-[10px] sm:text-[11px] font-mono font-medium px-2 py-0.5 rounded-md bg-zinc-850 text-emerald-400 border border-zinc-750';
+      } else {
+        badgeCaras.innerText = 'Sin rostros detectados';
+        badgeCaras.className = 'text-[10px] sm:text-[11px] font-mono font-medium px-2 py-0.5 rounded-md bg-zinc-850 text-zinc-500 border border-zinc-800';
+      }
+    }
+  }
+
+  if (nombreCompleta) {
+    cambiarCapaComparada(cardId, 'completa');
+  } else if (nombreIA) {
+    cambiarCapaComparada(cardId, 'ia');
+  } else if (nombreCaras) {
+    cambiarCapaComparada(cardId, 'caras');
+  }
+
+  var slider = document.getElementById('slider-' + cardId);
+  if (slider) slider.disabled = false;
+
+  var tabsModo = document.getElementById('tabs-modo-' + cardId);
+  if (tabsModo) tabsModo.classList.remove('opacity-40', 'pointer-events-none');
+
+  var botonesDiv = document.getElementById('botones-' + cardId);
+  if (botonesDiv) botonesDiv.classList.remove('opacity-40', 'pointer-events-none');
+
+  var statusEl = document.getElementById('status-' + cardId);
+  if (statusEl) {
+    statusEl.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span class="text-zinc-200 font-medium">Listo para revisión</span>';
+  }
+}
+
+function refrescarImagenesTarjeta(base, cardId) {
+  var ts = Date.now();
+  var it = document.getElementById('img-top-' + cardId);
+  if (it) it.src = '/api/ver-foto/' + base + '_original.png?t=' + ts;
+  var icomp = document.getElementById('img-completa-' + cardId);
+  if (icomp) {
+    icomp.onerror = function() {
+      this.onerror = null;
+      this.src = '/api/ver-foto/' + base + '_ia.png?t=' + Date.now();
+    };
+    icomp.src = '/api/ver-foto/' + base + '_completa.png?t=' + ts;
+  }
+  var ii = document.getElementById('img-ia-' + cardId);
+  if (ii) ii.src = '/api/ver-foto/' + base + '_ia.png?t=' + ts;
+  var ic = document.getElementById('img-caras-' + cardId);
+  if (ic) ic.src = '/api/ver-foto/' + base + '_caras.png?t=' + ts;
+}
+
+async function girarFoto(base, cardId) {
+  if (navigator.vibrate) navigator.vibrate(20);
+  var btn = document.getElementById('btn-girar-' + cardId);
+  if(btn) btn.classList.add('opacity-50', 'pointer-events-none');
+  try {
+    var res = await fetch('/api/rotar/' + base, {method: 'POST'});
+    if(res.ok) {
+      refrescarImagenesTarjeta(base, cardId);
+      mostrarToast('Rotación sincronizada en todas las capas', 'info');
+    }
+  } catch(e) { mostrarToast('Error al rotar', 'error'); }
+  finally { if(btn) setTimeout(function(){ btn.classList.remove('opacity-50', 'pointer-events-none'); }, 500); }
+}
+
+async function aprobarFoto(nombreFoto, cardId, tipoNombre) {
+  if (navigator.vibrate) navigator.vibrate(30);
+  try {
+    await fetch('/api/aprobar/' + nombreFoto, {method: 'POST'});
+    var card = document.getElementById(cardId);
+    if (card) {
+      card.classList.add('opacity-40', 'pointer-events-none', 'card-aprobada');
+      var st = document.getElementById('status-' + cardId);
+      if (st) st.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span class="text-emerald-400 font-medium">Aprobada (' + (tipoNombre || 'Guardada') + ')</span>';
+    }
+    var cnt = document.getElementById('contador-aprobadas');
+    cnt.innerText = parseInt(cnt.innerText) + 1;
+    mostrarToast('Guardada en bandeja: ' + (tipoNombre || 'Foto'), 'success');
+  } catch(e) { mostrarToast('Error al registrar aprobación', 'error'); }
+}
+
+async function descartarBase(base, cardId) {
+  if (navigator.vibrate) navigator.vibrate(25);
+  try {
+    var res = await fetch('/api/descartar-base/' + base, {method: 'POST'});
+    if(res.ok) {
+      var card = document.getElementById(cardId);
+      if (card) card.remove();
+      mostrarToast('Foto descartada del lote', 'info');
+    }
+  } catch(e) { mostrarToast('Error al descartar', 'error'); }
+}
+
+async function deshacerEdicion(base, cardId) {
+  try {
+    var res = await fetch('/api/deshacer-edicion/' + base, {method: 'POST'});
+    var data = await res.json();
+    if (res.ok) {
+      mostrarToast('Edición deshecha — respaldos restaurados', 'success');
+      refrescarImagenesTarjeta(base, cardId);
+      var btnDeshacer = document.getElementById('btn-deshacer-' + cardId);
+      if (btnDeshacer) btnDeshacer.style.display = 'none';
+    } else {
+      mostrarToast(data.detail || 'No hay edición para restaurar', 'error');
+    }
+  } catch(e) {
+    mostrarToast('Error de conexión', 'error');
+  }
+}
+
+// ==========================================
+// ATAJOS DE TECLADO
+// ==========================================
+window.addEventListener('keydown', function(e) {
+  if (['INPUT', 'SELECT', 'TEXTAREA'].includes(e.target.tagName)) return;
+
+  var baseTarget = tarjetaHoverActiva;
+  if (!baseTarget) {
+    var primera = document.querySelector('#galeria > div:not(.card-aprobada)');
+    if (primera && primera.id) {
+      baseTarget = primera.id.replace('foto-card-', '');
+    }
+  }
+  if (!baseTarget) return;
+
+  var cardId = 'foto-card-' + baseTarget;
+  var key = e.key.toLowerCase();
+
+  if (key === '1') {
+    e.preventDefault();
+    cambiarCapaComparada(cardId, 'completa');
+  } else if (key === '2') {
+    e.preventDefault();
+    cambiarCapaComparada(cardId, 'ia');
+  } else if (key === '3') {
+    e.preventDefault();
+    cambiarCapaComparada(cardId, 'caras');
+  } else if (key === 'a') {
+    e.preventDefault();
+    var btnA = document.getElementById('btn-aprob-comp-' + cardId);
+    if (btnA && !btnA.disabled) btnA.click();
+  } else if (key === 'i') {
+    e.preventDefault();
+    var btnI = document.getElementById('btn-aprob-ia-' + cardId);
+    if (btnI && !btnI.disabled) btnI.click();
+  } else if (key === 'c') {
+    e.preventDefault();
+    var btnC = document.getElementById('btn-aprob-caras-' + cardId);
+    if (btnC && !btnC.disabled) btnC.click();
+  } else if (key === 'o') {
+    e.preventDefault();
+    var btnO = document.getElementById('btn-aprob-orig-' + cardId);
+    if (btnO && !btnO.disabled) btnO.click();
+  } else if (key === 'd') {
+    e.preventDefault();
+    var btnD = document.getElementById('btn-descartar-' + cardId);
+    if (btnD) btnD.click();
+  } else if (key === 'r') {
+    e.preventDefault();
+    var btnR = document.getElementById('btn-girar-' + cardId);
+    if (btnR && !btnR.classList.contains('pointer-events-none')) btnR.click();
+  }
+});
+
+// ==========================================
+// MODAL ESTADÍSTICAS SAAS CON MODELOS IA
+// ==========================================
+async function abrirEstadisticas() {
+  document.getElementById('stats-modal').classList.remove('hidden');
+  var cont = document.getElementById('stats-contenido');
+  cont.innerHTML = '<div class="text-center py-8 text-zinc-500 font-mono text-xs">Cargando métricas...</div>';
+  try {
+    var res = await fetch('/api/estadisticas');
+    var data = await res.json();
+    var tg = data.totales_globales || {total_fotos:0, completa:0, ia:0, caras:0, original:0, pct_completa:0, pct_ia:0, pct_caras:0, pct_orig:0};
+    
+    var html = '';
+    // Tarjetas KPI con los NOMBRES DE LOS MODELOS DE IA
+    html += '<div class="grid grid-cols-2 md:grid-cols-4 gap-2.5 sm:gap-3 mb-6">';
+    
+    // 1. Restauración Total
+    html += '  <div class="bg-zinc-900/90 p-3 sm:p-4 rounded-xl border border-zinc-800 flex flex-col justify-between">';
+    html += '    <div>';
+    html += '      <div class="text-[10px] text-zinc-300 uppercase font-semibold tracking-wider">Restauración Total</div>';
+    html += '      <div class="text-[10px] text-emerald-400/80 font-mono mt-0.5">(GFPGAN + Real-ESRGAN Vulkan)</div>';
+    html += '    </div>';
+    html += '    <div class="text-lg sm:text-2xl font-bold text-emerald-400 font-mono mt-2">' + tg.completa + ' <span class="text-xs text-zinc-400 font-normal">(' + tg.pct_completa + '%)</span></div>';
+    html += '  </div>';
+
+    // 2. Escalado 4x
+    html += '  <div class="bg-zinc-900/90 p-3 sm:p-4 rounded-xl border border-zinc-800 flex flex-col justify-between">';
+    html += '    <div>';
+    html += '      <div class="text-[10px] text-zinc-300 uppercase font-semibold tracking-wider">Escalado 4x</div>';
+    html += '      <div class="text-[10px] text-indigo-400/80 font-mono mt-0.5">(Real-ESRGAN Vulkan)</div>';
+    html += '    </div>';
+    html += '    <div class="text-lg sm:text-2xl font-bold text-indigo-400 font-mono mt-2">' + tg.ia + ' <span class="text-xs text-zinc-400 font-normal">(' + tg.pct_ia + '%)</span></div>';
+    html += '  </div>';
+
+    // 3. Mejora Facial
+    html += '  <div class="bg-zinc-900/90 p-3 sm:p-4 rounded-xl border border-zinc-800 flex flex-col justify-between">';
+    html += '    <div>';
+    html += '      <div class="text-[10px] text-zinc-300 uppercase font-semibold tracking-wider">Mejora Facial</div>';
+    html += '      <div class="text-[10px] text-cyan-400/80 font-mono mt-0.5">(GFPGAN v1.4 PyTorch CPU)</div>';
+    html += '    </div>';
+    html += '    <div class="text-lg sm:text-2xl font-bold text-cyan-400 font-mono mt-2">' + tg.caras + ' <span class="text-xs text-zinc-400 font-normal">(' + tg.pct_caras + '%)</span></div>';
+    html += '  </div>';
+
+    // 4. Sin Modificar / Original
+    html += '  <div class="bg-zinc-900/90 p-3 sm:p-4 rounded-xl border border-zinc-800 flex flex-col justify-between">';
+    html += '    <div>';
+    html += '      <div class="text-[10px] text-zinc-300 uppercase font-semibold tracking-wider">Sin Modificar</div>';
+    html += '      <div class="text-[10px] text-zinc-500 font-mono mt-0.5">(Digitalización Directa)</div>';
+    html += '    </div>';
+    html += '    <div class="text-lg sm:text-2xl font-bold text-zinc-300 font-mono mt-2">' + tg.original + ' <span class="text-xs text-zinc-400 font-normal">(' + tg.pct_orig + '%)</span></div>';
+    html += '  </div>';
+    html += '</div>';
+
+    // Barra de distribución proporcional
+    if (tg.total_fotos > 0) {
+      html += '<div class="mb-6">';
+      html += '  <div class="flex justify-between text-[11px] text-zinc-400 mb-1.5 font-mono">';
+      html += '    <span>Distribución General</span>';
+      html += '    <span class="text-zinc-200 font-bold">' + tg.total_fotos + ' fotos totales</span>';
+      html += '  </div>';
+      html += '  <div class="h-2 w-full bg-zinc-950 rounded-full overflow-hidden flex">';
+      if (tg.pct_completa > 0) html += '<div style="width: ' + tg.pct_completa + '%" class="bg-emerald-500" title="Restauración Total"></div>';
+      if (tg.pct_ia > 0) html += '<div style="width: ' + tg.pct_ia + '%" class="bg-indigo-500" title="Escalado 4x"></div>';
+      if (tg.pct_caras > 0) html += '<div style="width: ' + tg.pct_caras + '%" class="bg-cyan-500" title="Mejora Facial"></div>';
+      if (tg.pct_orig > 0) html += '<div style="width: ' + tg.pct_orig + '%" class="bg-zinc-600" title="Original"></div>';
+      html += '  </div>';
+      html += '</div>';
+    }
+
+    // Tabla por operador con detalle de modelos
+    var ops = data.resumen_operadores || {};
+    var keys = Object.keys(ops);
+    if (!keys.length) {
+      html += '<p class="text-zinc-500 py-4 text-center font-mono">Sin registros cargados.</p>';
+    } else {
+      html += '<h4 class="font-semibold text-zinc-200 text-xs uppercase tracking-wider mb-2.5">Rendimiento por Operador</h4>';
+      html += '<div class="overflow-x-auto"><table class="w-full text-left mb-6 text-xs border border-zinc-850 rounded-xl overflow-hidden font-mono"><thead><tr class="bg-zinc-950 text-zinc-400 border-b border-zinc-850"><th class="py-2.5 px-3">Operador</th><th class="px-3">Álbumes</th><th class="px-3">Fotos</th><th class="px-3 text-center">Total<div class="text-[9px] text-emerald-400 font-normal font-sans">(GFPGAN+ESRGAN)</div></th><th class="px-3 text-center">4x<div class="text-[9px] text-indigo-400 font-normal font-sans">(Real-ESRGAN)</div></th><th class="px-3 text-center">Facial<div class="text-[9px] text-cyan-400 font-normal font-sans">(GFPGAN)</div></th><th class="px-3 text-center">Orig<div class="text-[9px] text-zinc-500 font-normal font-sans">(Directo)</div></th></tr></thead><tbody>';
+      keys.forEach(function (k) {
+        var r = ops[k];
+        html += '<tr class="border-b border-zinc-850/60 hover:bg-zinc-900/50">';
+        html += '  <td class="py-2 px-3 font-semibold text-zinc-100 font-sans">' + k + '</td>';
+        html += '  <td class="px-3 text-zinc-400">' + r.albumes_completados + '</td>';
+        html += '  <td class="px-3 text-zinc-200 font-bold">' + r.total_fotos + '</td>';
+        html += '  <td class="px-3 text-center text-emerald-400 font-medium">' + (r.aprobadas_completa || 0) + ' <span class="text-zinc-500 text-[10px]">(' + (r.pct_completa || 0) + '%)</span></td>';
+        html += '  <td class="px-3 text-center text-indigo-400 font-medium">' + (r.aprobadas_ia || 0) + ' <span class="text-zinc-500 text-[10px]">(' + (r.pct_ia || 0) + '%)</span></td>';
+        html += '  <td class="px-3 text-center text-cyan-400 font-medium">' + (r.aprobadas_caras || 0) + ' <span class="text-zinc-500 text-[10px]">(' + (r.pct_caras || 0) + '%)</span></td>';
+        html += '  <td class="px-3 text-center text-zinc-400 font-medium">' + (r.aprobadas_original || 0) + ' <span class="text-zinc-500 text-[10px]">(' + (r.pct_original || 0) + '%)</span></td>';
+        html += '</tr>';
+      });
+      html += '</tbody></table></div>';
+    }
+
+    // Tabla de álbumes
+    var alb = data.detalle_albumes || [];
+    if (alb.length) {
+      html += '<h4 class="font-semibold text-zinc-200 text-xs uppercase tracking-wider mb-2.5 mt-5">Registro de Álbumes</h4>';
+      html += '<div class="overflow-x-auto"><table class="w-full text-left text-xs border border-zinc-850 rounded-xl overflow-hidden font-mono"><thead><tr class="bg-zinc-950 text-zinc-400 border-b border-zinc-850"><th class="py-2 px-3">Operador</th><th class="px-3">Álbum</th><th class="px-3">Fotos</th><th class="px-3">Estado</th></tr></thead><tbody>';
+      alb.forEach(function (a) {
+        var estadoBadge = a.cerrado 
+          ? '<span class="px-2 py-0.5 rounded text-[10px] bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">Cerrado</span>'
+          : '<span class="px-2 py-0.5 rounded text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20">Abierto</span>';
+        html += '<tr class="border-b border-zinc-850/60 hover:bg-zinc-900/50"><td class="py-2 px-3 text-zinc-300 font-sans">' + a.operador + '</td><td class="px-3 text-zinc-200 font-sans font-medium">' + a.album + (a.fecha ? ' (' + a.fecha + ')' : '') + '</td><td class="px-3 text-zinc-400">' + a.fotos + '</td><td class="px-3">' + estadoBadge + '</td></tr>';
+      });
+      html += '</tbody></table></div>';
+    }
+
+    cont.innerHTML = html;
+  } catch (e) {
+    cont.innerText = 'Error al cargar métricas.';
+  }
+}
+
+function cerrarEstadisticas() {
+  document.getElementById('stats-modal').classList.add('hidden');
+}
+</script>
+<script src="/static/js/crop.js"></script>
+<script src="/static/js/scan.js"></script>
+</body>
+</html>

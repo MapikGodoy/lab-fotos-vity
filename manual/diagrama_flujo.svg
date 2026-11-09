@@ -1,0 +1,104 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 160" width="960" height="160">
+  <defs>
+    <linearGradient id="grad-1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#3b82f6"/><stop offset="100%" stop-color="#1d4ed8"/></linearGradient>
+    <linearGradient id="grad-2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0ea5e9"/><stop offset="100%" stop-color="#0369a1"/></linearGradient>
+    <linearGradient id="grad-3" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#4338ca"/></linearGradient>
+    <linearGradient id="grad-4" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#8b5cf6"/><stop offset="100%" stop-color="#6d28d9"/></linearGradient>
+    <linearGradient id="grad-5" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#ec4899"/><stop offset="100%" stop-color="#be185d"/></linearGradient>
+    <linearGradient id="grad-6" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#10b981"/><stop offset="100%" stop-color="#047857"/></linearGradient>
+  </defs>
+
+  <rect width="960" height="160" rx="12" fill="#ffffff" stroke="#e2e8f0" stroke-width="2" />
+
+  <!-- Paso 1 -->
+  <g transform="translate(15, 20)">
+    <rect width="135" height="120" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" />
+    <circle cx="24" cy="24" r="14" fill="url(#grad-1)" />
+    <text x="24" y="29" font-family="sans-serif" font-size="13" font-weight="900" fill="#ffffff" text-anchor="middle">1</text>
+    <text x="46" y="29" font-family="sans-serif" font-size="14" font-weight="bold" fill="#0f172a">Iniciar App</text>
+    <text x="12" y="58" font-family="sans-serif" font-size="11" fill="#475569">1 clic en acceso directo</text>
+    <text x="12" y="74" font-family="sans-serif" font-size="11" fill="#475569">o ejecutar script</text>
+    <rect x="10" y="88" width="115" height="22" rx="5" fill="#dbeafe" />
+    <text x="67" y="103" font-family="sans-serif" font-size="10" font-weight="bold" fill="#1e40af" text-anchor="middle">Abre Navegador</text>
+  </g>
+
+  <!-- Flecha 1-2 -->
+  <path d="M 155 80 L 170 80" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round" fill="none" />
+  <polygon points="170,76 177,80 170,84" fill="#94a3b8" />
+
+  <!-- Paso 2 -->
+  <g transform="translate(180, 20)">
+    <rect width="135" height="120" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" />
+    <circle cx="24" cy="24" r="14" fill="url(#grad-2)" />
+    <text x="24" y="29" font-family="sans-serif" font-size="13" font-weight="900" fill="#ffffff" text-anchor="middle">2</text>
+    <text x="46" y="29" font-family="sans-serif" font-size="14" font-weight="bold" fill="#0f172a">Crear Lote</text>
+    <text x="12" y="58" font-family="sans-serif" font-size="11" fill="#475569">• Nombre Operador</text>
+    <text x="12" y="74" font-family="sans-serif" font-size="11" fill="#475569">• Nombre del Álbum</text>
+    <rect x="10" y="88" width="115" height="22" rx="5" fill="#e0f2fe" />
+    <text x="67" y="103" font-family="sans-serif" font-size="10" font-weight="bold" fill="#0369a1" text-anchor="middle">Año Histórico (EXIF)</text>
+  </g>
+
+  <!-- Flecha 2-3 -->
+  <path d="M 320 80 L 335 80" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round" fill="none" />
+  <polygon points="335,76 342,80 335,84" fill="#94a3b8" />
+
+  <!-- Paso 3 -->
+  <g transform="translate(345, 20)">
+    <rect width="135" height="120" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" />
+    <circle cx="24" cy="24" r="14" fill="url(#grad-3)" />
+    <text x="24" y="29" font-family="sans-serif" font-size="13" font-weight="900" fill="#ffffff" text-anchor="middle">3</text>
+    <text x="46" y="29" font-family="sans-serif" font-size="14" font-weight="bold" fill="#0f172a">Escanear</text>
+    <text x="12" y="58" font-family="sans-serif" font-size="11" fill="#475569">1 o más fotos en vidrio</text>
+    <text x="12" y="74" font-family="sans-serif" font-size="11" fill="#475569">o Importar foto móvil</text>
+    <rect x="10" y="88" width="115" height="22" rx="5" fill="#ede9fe" />
+    <text x="67" y="103" font-family="sans-serif" font-size="10" font-weight="bold" fill="#5b21b6" text-anchor="middle">Auto-corte OpenCV</text>
+  </g>
+
+  <!-- Flecha 3-4 -->
+  <path d="M 485 80 L 500 80" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round" fill="none" />
+  <polygon points="500,76 507,80 500,84" fill="#94a3b8" />
+
+  <!-- Paso 4 -->
+  <g transform="translate(510, 20)">
+    <rect width="135" height="120" rx="10" fill="#faf5ff" stroke="#c084fc" stroke-width="1.5" />
+    <circle cx="24" cy="24" r="14" fill="url(#grad-4)" />
+    <text x="24" y="29" font-family="sans-serif" font-size="13" font-weight="900" fill="#ffffff" text-anchor="middle">4</text>
+    <text x="46" y="29" font-family="sans-serif" font-size="14" font-weight="bold" fill="#581c87">Motor IA</text>
+    <text x="12" y="58" font-family="sans-serif" font-size="11" fill="#475569">• GPU: Real-ESRGAN</text>
+    <text x="12" y="74" font-family="sans-serif" font-size="11" fill="#475569">• CPU: GFPGAN caras</text>
+    <rect x="10" y="88" width="115" height="22" rx="5" fill="#f3e8ff" />
+    <text x="67" y="103" font-family="sans-serif" font-size="10" font-weight="bold" fill="#7e22ce" text-anchor="middle">Genera 3 Variantes</text>
+  </g>
+
+  <!-- Flecha 4-5 -->
+  <path d="M 650 80 L 665 80" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round" fill="none" />
+  <polygon points="665,76 672,80 665,84" fill="#94a3b8" />
+
+  <!-- Paso 5 -->
+  <g transform="translate(675, 20)">
+    <rect width="135" height="120" rx="10" fill="#fff1f2" stroke="#fda4af" stroke-width="1.5" />
+    <circle cx="24" cy="24" r="14" fill="url(#grad-5)" />
+    <text x="24" y="29" font-family="sans-serif" font-size="13" font-weight="900" fill="#ffffff" text-anchor="middle">5</text>
+    <text x="46" y="29" font-family="sans-serif" font-size="14" font-weight="bold" fill="#9f1239">Revisar</text>
+    <text x="12" y="58" font-family="sans-serif" font-size="11" fill="#475569">Comparador slider</text>
+    <text x="12" y="74" font-family="sans-serif" font-size="11" fill="#475569">Lupa 2x, rotar y corte</text>
+    <rect x="10" y="88" width="115" height="22" rx="5" fill="#ffe4e6" />
+    <text x="67" y="103" font-family="sans-serif" font-size="10" font-weight="bold" fill="#be123c" text-anchor="middle">Aprobar [A, I, C, O]</text>
+  </g>
+
+  <!-- Flecha 5-6 -->
+  <path d="M 815 80 L 830 80" stroke="#94a3b8" stroke-width="2.5" stroke-linecap="round" fill="none" />
+  <polygon points="830,76 837,80 830,84" fill="#94a3b8" />
+
+  <!-- Paso 6 -->
+  <g transform="translate(840, 20)">
+    <rect width="105" height="120" rx="10" fill="#ecfdf5" stroke="#10b981" stroke-width="2" />
+    <circle cx="24" cy="24" r="14" fill="url(#grad-6)" />
+    <text x="24" y="29" font-family="sans-serif" font-size="13" font-weight="900" fill="#ffffff" text-anchor="middle">6</text>
+    <text x="46" y="29" font-family="sans-serif" font-size="14" font-weight="bold" fill="#065f46">Al NAS</text>
+    <text x="10" y="58" font-family="sans-serif" font-size="10" fill="#047857">• Inyección EXIF</text>
+    <text x="10" y="74" font-family="sans-serif" font-size="10" fill="#047857">• rsync a disco</text>
+    <rect x="8" y="88" width="89" height="22" rx="5" fill="#10b981" />
+    <text x="52" y="103" font-family="sans-serif" font-size="10" font-weight="bold" fill="#ffffff" text-anchor="middle">¡Cerrar Lote!</text>
+  </g>
+</svg>

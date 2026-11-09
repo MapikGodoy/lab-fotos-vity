@@ -1,0 +1,37 @@
+# Entornos virtuales Python
+venv/
+.venv/
+env/
+
+# Cache y compilados Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+
+# Variables de entorno y credenciales locales (NUNCA subir .env real)
+.env
+.env.local
+
+# Logs y estado de ejecución local
+desktopia.log
+*.log
+sesion_activa/
+registro_operadores.json
+
+# Carpeta de pruebas pesada no utilizada
+teste/
+
+# Modelos y binarios pesados de IA (descargados automáticamente por descargar_modelos.sh)
+gfpgan/weights/*.pth
+gfpgan/weights/*.pt
+ia_engine/realesrgan-ncnn-vulkan
+ia_engine/models/*.bin
+ia_engine/models/*.param
+*.zip
+
+# IDE y sistema operativo
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

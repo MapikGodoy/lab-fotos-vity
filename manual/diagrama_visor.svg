@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 340" width="880" height="340">
+  <defs>
+    <linearGradient id="bg-card" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#0f172a"/><stop offset="100%" stop-color="#020617"/></linearGradient>
+    <linearGradient id="bg-box-visor" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#18181b"/><stop offset="100%" stop-color="#09090b"/></linearGradient>
+  </defs>
+
+  <rect width="880" height="340" rx="14" fill="url(#bg-card)" stroke="#334155" stroke-width="2" />
+
+  <!-- Barra Superior de la Tarjeta -->
+  <g transform="translate(30, 25)">
+    <circle cx="8" cy="12" r="5" fill="#10b981" />
+    <text x="22" y="16" font-family="sans-serif" font-size="13" font-weight="bold" fill="#f8fafc">Listo para revisión</text>
+    <rect x="160" y="2" width="140" height="20" rx="6" fill="#1e293b" />
+    <text x="230" y="16" font-family="monospace" font-size="10" fill="#10b981" text-anchor="middle">2 rostros detectados</text>
+
+    <!-- Pestañas de Capas -->
+    <g transform="translate(470, 0)">
+      <rect x="0" y="0" width="145" height="25" rx="6" fill="#10b981" />
+      <text x="72" y="16" font-family="sans-serif" font-size="11" font-weight="bold" fill="#ffffff" text-anchor="middle">Total (Rostros+4x) [1]</text>
+
+      <rect x="153" y="0" width="85" height="25" rx="6" fill="#1e293b" stroke="#475569" />
+      <text x="195" y="16" font-family="sans-serif" font-size="11" font-weight="bold" fill="#94a3b8" text-anchor="middle">Solo 4x [2]</text>
+
+      <rect x="246" y="0" width="75" height="25" rx="6" fill="#1e293b" stroke="#475569" />
+      <text x="283" y="16" font-family="sans-serif" font-size="11" font-weight="bold" fill="#94a3b8" text-anchor="middle">Facial [3]</text>
+    </g>
+  </g>
+
+  <!-- El Visor Interactivo Dividido -->
+  <g transform="translate(30, 65)">
+    <rect width="820" height="190" rx="10" fill="url(#bg-box-visor)" stroke="#1e293b" stroke-width="1.5" />
+    
+    <!-- Lado Izquierdo: Original -->
+    <rect x="0" y="0" width="410" height="190" rx="10" fill="#1c1917" opacity="0.6" />
+    <text x="50" y="95" font-family="sans-serif" font-size="18" font-weight="900" fill="#78716c">ORIGINAL</text>
+    <text x="50" y="120" font-family="sans-serif" font-size="12" fill="#a8a29e">Escaneo natural sin IA</text>
+    <rect x="15" y="155" width="70" height="22" rx="4" fill="#09090b" opacity="0.8" />
+    <text x="50" y="170" font-family="sans-serif" font-size="10" fill="#e2e8f0" text-anchor="middle">Original</text>
+
+    <!-- Lado Derecho: Restauración Total -->
+    <text x="490" y="95" font-family="sans-serif" font-size="18" font-weight="900" fill="#10b981">RESTAURACIÓN TOTAL</text>
+    <text x="490" y="120" font-family="sans-serif" font-size="12" fill="#6ee7b7">Rostros GFPGAN + Escalado 4x GPU</text>
+    <rect x="690" y="155" width="115" height="22" rx="4" fill="#09090b" opacity="0.8" />
+    <text x="747" y="170" font-family="sans-serif" font-size="10" font-weight="bold" fill="#10b981" text-anchor="middle">Restauración Total</text>
+
+    <!-- Línea divisoria interactiva -->
+    <line x1="410" y1="0" x2="410" y2="190" stroke="#10b981" stroke-width="3" />
+    <circle cx="410" cy="95" r="16" fill="#0f172a" stroke="#10b981" stroke-width="2.5" />
+    <path d="M 403 95 L 407 91 M 403 95 L 407 99" stroke="#ffffff" stroke-width="2" stroke-linecap="round" />
+    <path d="M 417 95 L 413 91 M 417 95 L 413 99" stroke="#ffffff" stroke-width="2" stroke-linecap="round" />
+
+    <!-- Botón Lupa en esquina superior derecha -->
+    <g transform="translate(725, 12)">
+      <rect width="82" height="26" rx="6" fill="#1e293b" stroke="#6366f1" stroke-width="1.5" />
+      <text x="41" y="17" font-family="sans-serif" font-size="11" font-weight="bold" fill="#c7d2fe" text-anchor="middle">🔍 Lupa 2x</text>
+    </g>
+  </g>
+
+  <!-- Botonera Inferior de Acciones -->
+  <g transform="translate(30, 275)">
+    <!-- Herramientas -->
+    <rect x="0" y="0" width="85" height="36" rx="8" fill="#1e293b" stroke="#334155" />
+    <text x="42" y="22" font-family="sans-serif" font-size="12" font-weight="bold" fill="#cbd5e1" text-anchor="middle">🔄 Rotar</text>
+
+    <rect x="95" y="0" width="105" height="36" rx="8" fill="#1e293b" stroke="#334155" />
+    <text x="147" y="22" font-family="sans-serif" font-size="12" font-weight="bold" fill="#cbd5e1" text-anchor="middle">✂️ Recortar</text>
+
+    <rect x="210" y="0" width="80" height="36" rx="8" fill="#1e293b" stroke="#6366f1" />
+    <text x="250" y="22" font-family="sans-serif" font-size="12" font-weight="bold" fill="#a5b4fc" text-anchor="middle">🔍 Lupa</text>
+
+    <!-- Botones de Aprobación -->
+    <rect x="330" y="0" width="180" height="36" rx="8" fill="#10b981" />
+    <text x="420" y="22" font-family="sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">⭐ Aprobar Total [A]</text>
+
+    <rect x="520" y="0" width="95" height="36" rx="8" fill="#4f46e5" />
+    <text x="567" y="22" font-family="sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">Solo 4x [I]</text>
+
+    <rect x="625" y="0" width="90" height="36" rx="8" fill="#0284c7" />
+    <text x="670" y="22" font-family="sans-serif" font-size="12" font-weight="bold" fill="#ffffff" text-anchor="middle">Facial [C]</text>
+
+    <rect x="725" y="0" width="85" height="36" rx="8" fill="#334155" />
+    <text x="767" y="22" font-family="sans-serif" font-size="12" font-weight="bold" fill="#e2e8f0" text-anchor="middle">Original [O]</text>
+  </g>
+</svg>
