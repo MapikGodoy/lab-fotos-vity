@@ -767,7 +767,7 @@
         <table:table-row>
           <table:table-cell table:style-name="CellGray">
             <text:p text:style-name="TableCellBold">4. ¿Dónde quedan las fotos en el servidor NAS?</text:p>
-            <text:p text:style-name="TableCellP">Quedan ordenadas en la ruta de red: <text:span text:style-name="Mono">/srv/Disco_Nuevo/lab_fotos/[Nombre_Lote]_[Año]/</text:span>.</text:p>
+            <text:p text:style-name="TableCellP">Quedan ordenadas en la ruta de red: <text:span text:style-name="Mono">/srv/dev-disk-by-uuid-69fe1c68-291a-4766-8e61-bdc74f584e89/Fotos_escaneadas/[Nombre_Lote]_[Año]/</text:span>.</text:p>
           </table:table-cell>
         </table:table-row>
       </table:table>

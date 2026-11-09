@@ -98,7 +98,7 @@ El flujo de trabajo consta de 6 etapas automáticas y sincronizadas:
 
 ### Servidor de Almacenamiento NAS:
 - **Dirección IP**: `192.168.1.80`
-- **Ruta de Archivo**: `/srv/Disco_Nuevo/lab_fotos/`
+- **Ruta de Archivo**: `/srv/dev-disk-by-uuid-69fe1c68-291a-4766-8e61-bdc74f584e89/Fotos_escaneadas/`
 - **Protocolo de Comunicación**: SSH / rsync sin contraseña mediante claves públicas SSH (`id_rsa`).
 
 ---
@@ -318,7 +318,7 @@ python3 manual/compilar_manual.py
   ```
 - Verificá que la clave SSH pública esté autorizada en el NAS:
   ```bash
-  ssh mak@192.168.1.80 "ls /srv/Disco_Nuevo/lab_fotos"
+  ssh mak@192.168.1.80 "ls /srv/dev-disk-by-uuid-69fe1c68-291a-4766-8e61-bdc74f584e89/Fotos_escaneadas"
   ```
 - Si la conexión falla, revisá que la IP del NAS no haya cambiado por DHCP en el router.
 

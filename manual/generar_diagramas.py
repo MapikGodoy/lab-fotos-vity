@@ -320,11 +320,12 @@ svg_red = '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 880 180" width
     <text x="130" y="32" font-family="sans-serif" font-size="15" font-weight="bold" fill="#ffffff" text-anchor="middle">Servidor NAS Central</text>
     <text x="130" y="52" font-family="sans-serif" font-size="11" font-weight="bold" fill="#38bdf8" text-anchor="middle">IP: 192.168.1.80 (SSH rsync)</text>
     
-    <rect x="15" y="65" width="230" height="48" rx="6" fill="#1e293b" stroke="#334155" />
-    <text x="130" y="84" font-family="monospace" font-size="10" fill="#94a3b8" text-anchor="middle">/srv/Disco_Nuevo/lab_fotos/</text>
-    <text x="130" y="102" font-family="monospace" font-size="11" font-weight="bold" fill="#a7f3d0" text-anchor="middle">[Nombre_Album]_[Año]/</text>
+    <rect x="15" y="62" width="230" height="58" rx="6" fill="#1e293b" stroke="#334155" />
+    <text x="130" y="76" font-family="monospace" font-size="7.5" fill="#94a3b8" text-anchor="middle">/srv/dev-disk-by-uuid-69fe1c68-291a-4766-</text>
+    <text x="130" y="90" font-family="monospace" font-size="7.8" fill="#94a3b8" text-anchor="middle">8e61-bdc74f584e89/Fotos_escaneadas/</text>
+    <text x="130" y="109" font-family="monospace" font-size="10.5" font-weight="bold" fill="#a7f3d0" text-anchor="middle">[Nombre_Album]_[Año]/</text>
 
-    <text x="130" y="132" font-family="sans-serif" font-size="10" fill="#64748b" text-anchor="middle">Almacenamiento permanente y seguro</text>
+    <text x="130" y="136" font-family="sans-serif" font-size="10" fill="#64748b" text-anchor="middle">Almacenamiento permanente y seguro</text>
   </g>
 </svg>'''
 

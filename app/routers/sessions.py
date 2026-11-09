@@ -123,7 +123,8 @@ def _enviar_fotos(fotos, lote_nombre, fecha):
     if not PASS_SSH:
         return False
     PASS_SSH = PASS_SSH.strip().strip("'").strip('"')
-    RUTA_NAS = f"/srv/Disco_Nuevo/lab_fotos/{lote_nombre}_{fecha}/"
+    nas_base = settings.NAS_PATH.rstrip("/")
+    RUTA_NAS = f"{nas_base}/{lote_nombre}_{fecha}/"
     env_seguro = os.environ.copy()
     env_seguro["SSHPASS"] = PASS_SSH
 

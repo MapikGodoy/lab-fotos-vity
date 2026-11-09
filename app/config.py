@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     
     NAS_USER: str = "mak"
     NAS_HOST: str = "192.168.1.80"
-    NAS_PATH: str = "/srv/Disco_Nuevo/lab_fotos"
+    NAS_PATH: str = "/srv/dev-disk-by-uuid-69fe1c68-291a-4766-8e61-bdc74f584e89/Fotos_escaneadas"
     NAS_PASS: str = ""
     
     SCANNER_DEVICE_PATTERN: str = r'(XeroxPhaser3100:usb:\d+:\d+)'
