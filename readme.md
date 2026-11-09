@@ -119,7 +119,7 @@ sudo apt install -y python3 python3-pip python3-venv \
 ### 2. Clonado e Instalación Rápida (Todo en 1)
 Tras clonar el repositorio, el script `instalar.sh` crea el entorno virtual, instala las dependencias Python, genera tu `.env` desde `.env.example` y descarga automáticamente los binarios y modelos pesados de IA (excluidos de Git):
 ```bash
-git clone <URL_DEL_REPOSITORIO> lab-fotos-vity
+git clone https://github.com/MapikGodoy/lab-fotos-vity.git
 cd lab-fotos-vity
 ./instalar.sh
 ```
@@ -134,6 +134,27 @@ Copiá `.env.example` a `.env` (o editá el que creó `instalar.sh`) con tus cre
 ```bash
 cp .env.example .env
 ```
+
+### 5. Compatibilidad con Otros Escáneres (Uso en Otra PC)
+> **Observación importante**: El sistema viene preconfigurado para el escáner **Xerox Phaser 3100MFP**, pero puede funcionar con **cualquier otro escáner compatible con SANE en Linux** (o incluso sin driver de escaneo) teniendo en cuenta los siguientes puntos:
+
+1. **Cambiar el patrón de dispositivo en `.env` (sin tocar código)**:
+   En `app/config.py`, por defecto busca `XeroxPhaser3100:usb:...`. En otra PC, ejecutá `scanimage -L` para ver el identificador de tu nuevo escáner y definí `SCANNER_DEVICE_PATTERN` en tu `.env` local. Por ejemplo, para tomar automáticamente el primer escáner SANE detectado:
+   ```ini
+   SCANNER_DEVICE_PATTERN=device `([^']+)'
+   ```
+2. **Ruta del binario y permisos `sudo` sin contraseña**:
+   El módulo de escaneo (`app/routers/scanning.py`) ejecuta `sudo /usr/sbin/scanimage` en segundo plano (sin terminal para pedir clave). En otra PC debés:
+   - Verificar que exista `/usr/sbin/scanimage` (si tu distribución lo instala en `/usr/bin/scanimage`, crear un enlace simbólico: `sudo ln -s /usr/bin/scanimage /usr/sbin/scanimage`).
+   - Permitir ejecutar `scanimage` sin contraseña en `/etc/sudoers` (con `sudo visudo`):
+     ```text
+     tu_usuario ALL=(ALL) NOPASSWD: /usr/sbin/scanimage
+     ```
+3. **Parámetro `--mode=Color` y DPI**:
+   El comando invoca `--format=png --mode=Color --resolution=150|300`. La gran mayoría de escáneres planos SANE aceptan `Color`; si un modelo antiguo requiriera otro literal (ej. `24bit Color` o `color`), se debe ajustar en `app/routers/scanning.py`.
+4. **Alternativas sin drivers propietarios complejos**:
+   - **Escáneres modernos USB o Wi-Fi (eSCL / AirScan)**: En distribuciones Ubuntu/Debian modernas, instalando `sane-airscan` la mayoría de escáneres HP, Epson, Canon y Brother funcionan directo en `scanimage -L` sin instalar drivers propietarios.
+   - **Usando el software nativo o celular (Botón "Importar")**: Si en la otra PC escaneás con la aplicación del fabricante (o en Windows/macOS), todo el resto del sistema (recorte, GFPGAN, Real-ESRGAN, lupa, EXIF y subida al NAS) funciona al 100% cargando las fotos con el botón **Importar**.
 
 ---
 
