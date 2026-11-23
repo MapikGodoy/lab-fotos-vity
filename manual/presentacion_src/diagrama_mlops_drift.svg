@@ -1,0 +1,71 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 270" width="920" height="270">
+  <rect width="920" height="270" rx="14" fill="#0f172a" stroke="#334155" stroke-width="2" />
+  <text x="460" y="28" font-family="sans-serif" font-size="13.5" font-weight="bold" fill="#f8fafc" text-anchor="middle">ARQUITECTURA MLOPS: DESPLIEGUE SEGURO, EVALUACIÓN HITL Y DETECCIÓN DE DRIFT</text>
+
+  <!-- Bloque 1: Pre-procesamiento & Guards -->
+  <g transform="translate(22, 48)">
+    <rect width="195" height="145" rx="10" fill="#1e293b" stroke="#38bdf8" stroke-width="1.8" />
+    <rect x="12" y="10" width="171" height="22" rx="4" fill="#0284c7" />
+    <text x="97" y="25" font-family="sans-serif" font-size="10" font-weight="bold" fill="#ffffff" text-anchor="middle">1. GUARDAS DE ENTRADA</text>
+    <text x="15" y="52" font-family="sans-serif" font-size="9.5" fill="#e2e8f0">• EXIF Transpose (JPG móvil)</text>
+    <text x="15" y="70" font-family="sans-serif" font-size="9.5" fill="#e2e8f0">• Resize LANCZOS MAX 1800px</text>
+    <text x="15" y="88" font-family="sans-serif" font-size="9.5" fill="#e2e8f0">• Auto-orientación Landmarks</text>
+    <text x="15" y="106" font-family="sans-serif" font-size="9.5" fill="#7dd3fc">• Si caras == 0 (Paisaje):</text>
+    <text x="22" y="120" font-family="sans-serif" font-size="9" fill="#bae6fd">Inhibe rotación automática</text>
+    <text x="15" y="136" font-family="sans-serif" font-size="8.5" fill="#94a3b8">Mitiga Data Drift de fuentes</text>
+  </g>
+
+  <path d="M 222 120 L 244 120" stroke="#38bdf8" stroke-width="2.5" fill="none" />
+  <polygon points="244,115 252,120 244,125" fill="#38bdf8" />
+
+  <!-- Bloque 2: Serving Paralelo + Fallbacks -->
+  <g transform="translate(254, 48)">
+    <rect width="205" height="145" rx="10" fill="#1e293b" stroke="#a855f7" stroke-width="1.8" />
+    <rect x="12" y="10" width="181" height="22" rx="4" fill="#7c3aed" />
+    <text x="102" y="25" font-family="sans-serif" font-size="10" font-weight="bold" fill="#ffffff" text-anchor="middle">2. SERVING ASÍNCRONO</text>
+    <text x="15" y="52" font-family="sans-serif" font-size="9.5" fill="#e2e8f0">• GPU Lock RX 580 (tile=200)</text>
+    <text x="15" y="70" font-family="sans-serif" font-size="9.5" fill="#e2e8f0">• CPU Lock GFPGAN v1.4</text>
+    <text x="15" y="88" font-family="sans-serif" font-size="9.5" fill="#e2e8f0">• Fusión Total (Caras + 4x)</text>
+    <text x="15" y="106" font-family="sans-serif" font-size="9.5" fill="#d8b4fe">• Fallback determinístico:</text>
+    <text x="22" y="120" font-family="sans-serif" font-size="9" fill="#e9d5ff">Copia segura a 4x si falla</text>
+    <text x="15" y="136" font-family="sans-serif" font-size="8.5" fill="#94a3b8">Timeout 300s + Botón Reintentar</text>
+  </g>
+
+  <path d="M 464 120 L 486 120" stroke="#a855f7" stroke-width="2.5" fill="none" />
+  <polygon points="486,115 494,120 486,125" fill="#a855f7" />
+
+  <!-- Bloque 3: Validación Humana (HITL) -->
+  <g transform="translate(496, 48)">
+    <rect width="195" height="145" rx="10" fill="#1e293b" stroke="#10b981" stroke-width="1.8" />
+    <rect x="12" y="10" width="171" height="22" rx="4" fill="#059669" />
+    <text x="97" y="25" font-family="sans-serif" font-size="10" font-weight="bold" fill="#ffffff" text-anchor="middle">3. FILTRO HUMANO (HITL)</text>
+    <text x="15" y="52" font-family="sans-serif" font-size="9.5" fill="#e2e8f0">• Visor Slider Comparativo</text>
+    <text x="15" y="70" font-family="sans-serif" font-size="9.5" fill="#e2e8f0">• Lupa 2.2x de detalle facial</text>
+    <text x="15" y="88" font-family="sans-serif" font-size="9.5" fill="#6ee7b7">• Aprobación selectiva:</text>
+    <text x="22" y="103" font-family="monospace" font-size="9" fill="#a7f3d0">[A] Total   [I] Solo 4x</text>
+    <text x="22" y="117" font-family="monospace" font-size="9" fill="#a7f3d0">[C] Caras   [0] Original</text>
+    <text x="15" y="136" font-family="sans-serif" font-size="8.5" fill="#94a3b8">Bloquea falsos positivos IA</text>
+  </g>
+
+  <path d="M 696 120 L 718 120" stroke="#10b981" stroke-width="2.5" fill="none" />
+  <polygon points="718,115 726,120 718,125" fill="#10b981" />
+
+  <!-- Bloque 4: Telemetría y Monitoreo -->
+  <g transform="translate(728, 48)">
+    <rect width="170" height="145" rx="10" fill="#1e293b" stroke="#f59e0b" stroke-width="1.8" />
+    <rect x="10" y="10" width="150" height="22" rx="4" fill="#d97706" />
+    <text x="85" y="25" font-family="sans-serif" font-size="10" font-weight="bold" fill="#ffffff" text-anchor="middle">4. MONITOREO Y DRIFT</text>
+    <text x="12" y="52" font-family="sans-serif" font-size="9.5" fill="#e2e8f0">• Log: desktopia.log</text>
+    <text x="12" y="70" font-family="sans-serif" font-size="9.5" fill="#e2e8f0">• KPIs: /api/estadisticas</text>
+    <text x="12" y="88" font-family="sans-serif" font-size="9.5" fill="#fcd34d">• Alerta de Drift:</text>
+    <text x="16" y="103" font-family="sans-serif" font-size="8.8" fill="#fde68a">Si baja % Completa o</text>
+    <text x="16" y="116" font-family="sans-serif" font-size="8.8" fill="#fde68a">sube % Original/Descarte</text>
+    <text x="12" y="136" font-family="sans-serif" font-size="8.5" fill="#94a3b8">Swap modelo vía .env</text>
+  </g>
+
+  <!-- Bucle de Retroalimentación (Feedback Loop) abajo -->
+  <path d="M 813 195 L 813 226 L 119 226 L 119 200" stroke="#f59e0b" stroke-width="2" stroke-dasharray="6,4" fill="none" />
+  <polygon points="114,202 119,193 124,202" fill="#f59e0b" />
+  <rect x="150" y="213" width="620" height="24" rx="12" fill="#78350f" stroke="#f59e0b" stroke-width="1.2" />
+  <text x="460" y="229" font-family="sans-serif" font-size="9.5" font-weight="bold" fill="#fef3c7" text-anchor="middle">LAZO DE MEJORA CONTINUA: Ajuste de VULKAN_MODEL / Umbrales OpenCV / Pesos GFPGAN según KPIs reales</text>
+</svg>

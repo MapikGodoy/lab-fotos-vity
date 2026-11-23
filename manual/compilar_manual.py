@@ -627,7 +627,7 @@ fodt_content = f'''<?xml version="1.0" encoding="UTF-8"?>
       <text:p text:style-name="SectionTitle">Paso 7: Envío Seguro al Servidor NAS y Metadatos</text:p>
 
       <text:p text:style-name="BodyP">
-        Las fotos aprobadas no se guardan en la PC local, sino que se transfieren de forma cifrada al servidor NAS:
+        Las fotos aprobadas se transfieren de forma cifrada al servidor NAS y el sistema resguarda automáticamente una copia de la toma original en la bóveda local <text:span text:style-name="Mono">bkporiginal/</text:span>:
       </text:p>
 
       <text:p text:style-name="CenterP">
@@ -648,6 +648,7 @@ fodt_content = f'''<?xml version="1.0" encoding="UTF-8"?>
             <text:p text:style-name="BulletP">• <text:span text:style-name="Bold">Fecha Original:</text:span> El año histórico que pusiste al crear el lote (ej: <text:span text:style-name="Mono">1985:01:01 12:00:00</text:span>).</text:p>
             <text:p text:style-name="BulletP">• <text:span text:style-name="Bold">Software:</text:span> Nombre del modelo de IA que aprobaste (ej: <text:span text:style-name="Mono">Desktopia Lab - GFPGAN + Real-ESRGAN</text:span>).</text:p>
             <text:p text:style-name="BulletP">• <text:span text:style-name="Bold">Descripción:</text:span> Resumen de la digitalización para que el archivo sea ordenado de por vida.</text:p>
+            <text:p text:style-name="BulletP">• <text:span text:style-name="Bold">Bóveda Local bkporiginal/:</text:span> En cada envío se resguarda la foto original recortada/rotada con estos mismos metadatos.</text:p>
           </table:table-cell>
         </table:table-row>
       </table:table>
@@ -773,8 +774,8 @@ fodt_content = f'''<?xml version="1.0" encoding="UTF-8"?>
         </table:table-row>
         <table:table-row>
           <table:table-cell table:style-name="CellGray">
-            <text:p text:style-name="TableCellBold">4. ¿Dónde quedan las fotos en el servidor NAS?</text:p>
-            <text:p text:style-name="TableCellP">Quedan ordenadas en la ruta de red: <text:span text:style-name="Mono">/srv/dev-disk-by-uuid-69fe1c68-291a-4766-8e61-bdc74f584e89/Fotos_escaneadas/[Nombre_Lote]_[Año]/</text:span>.</text:p>
+            <text:p text:style-name="TableCellBold">4. ¿Dónde quedan las fotos en el servidor NAS y en la PC?</text:p>
+            <text:p text:style-name="TableCellP">En el NAS quedan ordenadas en: <text:span text:style-name="Mono">/srv/dev-disk-by-uuid-69fe1c68-291a-4766-8e61-bdc74f584e89/Fotos_escaneadas/[Nombre_Lote]_[Año]/</text:span>. Además, en la PC local queda la toma original recortada en <text:span text:style-name="Mono">bkporiginal/[Nombre_Lote]_[Año]/</text:span>.</text:p>
           </table:table-cell>
         </table:table-row>
       </table:table>

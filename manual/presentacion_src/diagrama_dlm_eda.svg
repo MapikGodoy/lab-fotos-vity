@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 250" width="920" height="250">
+  <rect width="920" height="250" rx="14" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2" />
+  <text x="460" y="26" font-family="sans-serif" font-size="13.5" font-weight="bold" fill="#0f172a" text-anchor="middle">CICLO DE VIDA DEL DATO (DLM): TRAZABILIDAD, ANÁLISIS EDA Y DESTRUCCIÓN SEGURA</text>
+
+  <!-- 5 Cajas Secuenciales -->
+  <g transform="translate(20, 48)">
+    <!-- 1. Captura -->
+    <rect width="160" height="122" rx="8" fill="#ffffff" stroke="#0284c7" stroke-width="2" />
+    <rect width="160" height="24" rx="8" fill="#0284c7" />
+    <text x="80" y="16" font-family="sans-serif" font-size="10" font-weight="bold" fill="#ffffff" text-anchor="middle">1. CAPTURA</text>
+    <text x="80" y="42" font-family="sans-serif" font-size="9.5" font-weight="bold" fill="#0f172a" text-anchor="middle">Origen Multicanal</text>
+    <text x="80" y="58" font-family="sans-serif" font-size="8.8" fill="#334155" text-anchor="middle">• Escáner SANE 300 DPI</text>
+    <text x="80" y="72" font-family="sans-serif" font-size="8.8" fill="#334155" text-anchor="middle">• Upload JPG/PNG móvil</text>
+    <text x="80" y="86" font-family="sans-serif" font-size="8.8" fill="#334155" text-anchor="middle">• Simulador capacitación</text>
+    <text x="80" y="108" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#0369a1" text-anchor="middle">+ Contexto (Operador/Año)</text>
+  </g>
+
+  <path d="M 184 109 L 198 109" stroke="#64748b" stroke-width="2" />
+  <polygon points="196,105 203,109 196,113" fill="#64748b" />
+
+  <g transform="translate(205, 48)">
+    <!-- 2. Procesamiento & EDA -->
+    <rect width="160" height="122" rx="8" fill="#ffffff" stroke="#7c3aed" stroke-width="2" />
+    <rect width="160" height="24" rx="8" fill="#7c3aed" />
+    <text x="80" y="16" font-family="sans-serif" font-size="10" font-weight="bold" fill="#ffffff" text-anchor="middle">2. LIMPIEZA Y EDA</text>
+    <text x="80" y="42" font-family="sans-serif" font-size="9.5" font-weight="bold" fill="#0f172a" text-anchor="middle">Normalización Activa</text>
+    <text x="80" y="58" font-family="sans-serif" font-size="8.8" fill="#334155" text-anchor="middle">• Umbral OpenCV &gt;100k px²</text>
+    <text x="80" y="72" font-family="sans-serif" font-size="8.8" fill="#334155" text-anchor="middle">• Limpieza borde 10px tapa</text>
+    <text x="80" y="86" font-family="sans-serif" font-size="8.8" fill="#334155" text-anchor="middle">• Outliers: MAX_DIM 1800px</text>
+    <text x="80" y="108" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#6d28d9" text-anchor="middle">Copias temporales en RAM/disco</text>
+  </g>
+
+  <path d="M 369 109 L 383 109" stroke="#64748b" stroke-width="2" />
+  <polygon points="381,105 388,109 381,113" fill="#64748b" />
+
+  <g transform="translate(390, 48)">
+    <!-- 3. Uso & Enriquecimiento -->
+    <rect width="160" height="122" rx="8" fill="#ffffff" stroke="#0d9488" stroke-width="2" />
+    <rect width="160" height="24" rx="8" fill="#0d9488" />
+    <text x="80" y="16" font-family="sans-serif" font-size="10" font-weight="bold" fill="#ffffff" text-anchor="middle">3. USO Y EXIF</text>
+    <text x="80" y="42" font-family="sans-serif" font-size="9.5" font-weight="bold" fill="#0f172a" text-anchor="middle">Sesión y Trazabilidad</text>
+    <text x="80" y="58" font-family="sans-serif" font-size="8.8" fill="#334155" text-anchor="middle">• Estado en sesion_activa/</text>
+    <text x="80" y="72" font-family="sans-serif" font-size="8.8" fill="#334155" text-anchor="middle">• DateTimeOriginal = Año</text>
+    <text x="80" y="86" font-family="sans-serif" font-size="8.8" fill="#334155" text-anchor="middle">• Software = Motor IA usado</text>
+    <text x="80" y="108" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#0f766e" text-anchor="middle">Inyectado con exiftool</text>
+  </g>
+
+  <path d="M 554 109 L 568 109" stroke="#64748b" stroke-width="2" />
+  <polygon points="566,105 573,109 566,113" fill="#64748b" />
+
+  <g transform="translate(575, 48)">
+    <!-- 4. Archivado -->
+    <rect width="160" height="122" rx="8" fill="#ffffff" stroke="#059669" stroke-width="2" />
+    <rect width="160" height="24" rx="8" fill="#059669" />
+    <text x="80" y="16" font-family="sans-serif" font-size="10" font-weight="bold" fill="#ffffff" text-anchor="middle">4. ARCHIVADO NAS</text>
+    <text x="80" y="42" font-family="sans-serif" font-size="9.5" font-weight="bold" fill="#0f172a" text-anchor="middle">Almacenamiento Seguro</text>
+    <text x="80" y="58" font-family="sans-serif" font-size="8.8" fill="#334155" text-anchor="middle">• Túnel cifrado SSH + rsync</text>
+    <text x="80" y="72" font-family="sans-serif" font-size="8.8" fill="#334155" text-anchor="middle">• IP Privada 192.168.1.80</text>
+    <text x="80" y="86" font-family="sans-serif" font-size="8.8" fill="#334155" text-anchor="middle">• Carpeta: [Album]_[Año]/</text>
+    <text x="80" y="108" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#047857" text-anchor="middle">100% On-Premise (Sin Nube)</text>
+  </g>
+
+  <path d="M 739 109 L 753 109" stroke="#64748b" stroke-width="2" />
+  <polygon points="751,105 758,109 751,113" fill="#64748b" />
+
+  <g transform="translate(760, 48)">
+    <!-- 5. Destrucción Segura -->
+    <rect width="140" height="122" rx="8" fill="#fff1f2" stroke="#e11d48" stroke-width="2" />
+    <rect width="140" height="24" rx="8" fill="#e11d48" />
+    <text x="70" y="16" font-family="sans-serif" font-size="10" font-weight="bold" fill="#ffffff" text-anchor="middle">5. PURGA SEGURA</text>
+    <text x="70" y="42" font-family="sans-serif" font-size="9.5" font-weight="bold" fill="#881337" text-anchor="middle">Higiene de Datos Local</text>
+    <text x="70" y="58" font-family="sans-serif" font-size="8.5" fill="#475569" text-anchor="middle">• Borra platina y .temp</text>
+    <text x="70" y="72" font-family="sans-serif" font-size="8.5" fill="#475569" text-anchor="middle">• Purga variantes desc.</text>
+    <text x="70" y="86" font-family="sans-serif" font-size="8.5" fill="#475569" text-anchor="middle">• Limpia sesión al cerrar</text>
+    <text x="70" y="108" font-family="sans-serif" font-size="8.5" font-weight="bold" fill="#be123c" text-anchor="middle">Minimización PII en PC</text>
+  </g>
+
+  <!-- Banda inferior de Gobernanza -->
+  <rect x="20" y="186" width="880" height="48" rx="8" fill="#0f172a" />
+  <text x="460" y="206" font-family="sans-serif" font-size="10.5" font-weight="bold" fill="#34d399" text-anchor="middle">GOBERNANZA, PRIVACIDAD POR DISEÑO (LEY 25.326) Y ÉTICA ALGORÍTMICA</text>
+  <text x="460" y="224" font-family="sans-serif" font-size="9.3" fill="#cbd5e1" text-anchor="middle">Ningún rostro biométrico sale a APIs externas • Secretos NAS protegidos en .env • Transparencia en EXIF sobre intervención de IA</text>
+</svg>

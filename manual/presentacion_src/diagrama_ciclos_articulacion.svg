@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 340" width="920" height="340">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f8fafc" />
+      <stop offset="100%" stop-color="#f1f5f9" />
+    </linearGradient>
+  </defs>
+  <rect width="920" height="340" rx="14" fill="url(#bgGrad)" stroke="#cbd5e1" stroke-width="2" />
+
+  <!-- Título Superior -->
+  <text x="460" y="28" font-family="sans-serif" font-size="14" font-weight="bold" fill="#0f172a" text-anchor="middle">ARTICULACIÓN SISTÉMICA EN DESKTOPIA LAB 2.0 (CORE AI)</text>
+  <text x="460" y="45" font-family="sans-serif" font-size="10.5" fill="#475569" text-anchor="middle">Intersección continua entre el Software Tradicional (SDLC), los Motores Inteligentes (MLOps) y la Gobernanza del Dato (DLM)</text>
+
+  <!-- Encabezados de Columnas (Fases Integradas) -->
+  <g transform="translate(175, 58)">
+    <rect x="0" y="0" width="170" height="22" rx="4" fill="#0f172a" />
+    <text x="85" y="15" font-family="sans-serif" font-size="10" font-weight="bold" fill="#ffffff" text-anchor="middle">1. INICIO Y CAPTURA</text>
+
+    <rect x="180" y="0" width="170" height="22" rx="4" fill="#0f172a" />
+    <text x="265" y="15" font-family="sans-serif" font-size="10" font-weight="bold" fill="#ffffff" text-anchor="middle">2. PROCESAMIENTO IA</text>
+
+    <rect x="360" y="0" width="170" height="22" rx="4" fill="#0f172a" />
+    <text x="445" y="15" font-family="sans-serif" font-size="10" font-weight="bold" fill="#ffffff" text-anchor="middle">3. CONTROL HUMANO</text>
+
+    <rect x="540" y="0" width="175" height="22" rx="4" fill="#0f172a" />
+    <text x="627" y="15" font-family="sans-serif" font-size="10" font-weight="bold" fill="#ffffff" text-anchor="middle">4. ARCHIVO Y MONITOREO</text>
+  </g>
+
+  <!-- FILA 1: SDLC (SISTEMA TRADICIONAL) -->
+  <g transform="translate(20, 90)">
+    <rect width="145" height="70" rx="8" fill="#1d4ed8" />
+    <text x="72" y="28" font-family="sans-serif" font-size="11.5" font-weight="bold" fill="#ffffff" text-anchor="middle">CICLO SDLC</text>
+    <text x="72" y="44" font-family="sans-serif" font-size="9.5" fill="#dbeafe" text-anchor="middle">Sistema Tradicional</text>
+    <text x="72" y="58" font-family="sans-serif" font-size="8.5" fill="#93c5fd" text-anchor="middle">FastAPI + SPA + Manual</text>
+
+    <!-- Celdas SDLC -->
+    <rect x="155" y="0" width="170" height="70" rx="6" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5" />
+    <text x="240" y="20" font-family="sans-serif" font-size="10" font-weight="bold" fill="#1e3a8a" text-anchor="middle">Lanzador 1-Clic y Lote</text>
+    <text x="240" y="36" font-family="sans-serif" font-size="9" fill="#334155" text-anchor="middle">UI Apertura de Álbum + QR</text>
+    <text x="240" y="51" font-family="sans-serif" font-size="9" fill="#334155" text-anchor="middle">Escáner SANE / Upload</text>
+
+    <rect x="335" y="0" width="170" height="70" rx="6" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5" />
+    <text x="420" y="20" font-family="sans-serif" font-size="10" font-weight="bold" fill="#1e3a8a" text-anchor="middle">Orquestación Async API</text>
+    <text x="420" y="36" font-family="sans-serif" font-size="9" fill="#334155" text-anchor="middle">Routers /procesar-ia</text>
+    <text x="420" y="51" font-family="sans-serif" font-size="9" fill="#334155" text-anchor="middle">Locks GPU / Persistencia F5</text>
+
+    <rect x="515" y="0" width="170" height="70" rx="6" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5" />
+    <text x="600" y="20" font-family="sans-serif" font-size="10" font-weight="bold" fill="#1e3a8a" text-anchor="middle">Mesa de Control Visual</text>
+    <text x="600" y="36" font-family="sans-serif" font-size="9" fill="#334155" text-anchor="middle">Slider + Lupa 2.2x + Atajos</text>
+    <text x="600" y="51" font-family="sans-serif" font-size="9" fill="#334155" text-anchor="middle">Recorte y Rotación 90°</text>
+
+    <rect x="695" y="0" width="175" height="70" rx="6" fill="#eff6ff" stroke="#3b82f6" stroke-width="1.5" />
+    <text x="782" y="20" font-family="sans-serif" font-size="10" font-weight="bold" fill="#1e3a8a" text-anchor="middle">Despliegue y Cierre</text>
+    <text x="782" y="36" font-family="sans-serif" font-size="9" fill="#334155" text-anchor="middle">Dashboard /estadisticas</text>
+    <text x="782" y="51" font-family="sans-serif" font-size="9" fill="#334155" text-anchor="middle">Botón Apagar Seguro</text>
+  </g>
+
+  <!-- FILA 2: MLOps (SISTEMA DE IA) -->
+  <g transform="translate(20, 172)">
+    <rect width="145" height="70" rx="8" fill="#7c3aed" />
+    <text x="72" y="28" font-family="sans-serif" font-size="11.5" font-weight="bold" fill="#ffffff" text-anchor="middle">CICLO MLOps</text>
+    <text x="72" y="44" font-family="sans-serif" font-size="9.5" fill="#ede9fe" text-anchor="middle">Módulos Inteligentes</text>
+    <text x="72" y="58" font-family="sans-serif" font-size="8.5" fill="#ddd6fe" text-anchor="middle">OpenCV + Dual Engine</text>
+
+    <!-- Celdas MLOps -->
+    <rect x="155" y="0" width="170" height="70" rx="6" fill="#f5f3ff" stroke="#8b5cf6" stroke-width="1.5" />
+    <text x="240" y="20" font-family="sans-serif" font-size="10" font-weight="bold" fill="#4c1d95" text-anchor="middle">Visión Clásica y Preproc.</text>
+    <text x="240" y="36" font-family="sans-serif" font-size="9" fill="#334155" text-anchor="middle">OpenCV Contours + Warp</text>
+    <text x="240" y="51" font-family="sans-serif" font-size="9" fill="#334155" text-anchor="middle">Normalización MAX_DIM 1800</text>
+
+    <rect x="335" y="0" width="170" height="70" rx="6" fill="#f5f3ff" stroke="#8b5cf6" stroke-width="1.5" />
+    <text x="420" y="20" font-family="sans-serif" font-size="10" font-weight="bold" fill="#4c1d95" text-anchor="middle">Inferencia Paralela IA</text>
+    <text x="420" y="36" font-family="sans-serif" font-size="9" fill="#334155" text-anchor="middle">Auto-giro Landmarks Ojos</text>
+    <text x="420" y="51" font-family="sans-serif" font-size="9" fill="#334155" text-anchor="middle">GFPGAN + Vulkan 4x + Fusión</text>
+
+    <rect x="515" y="0" width="170" height="70" rx="6" fill="#f5f3ff" stroke="#8b5cf6" stroke-width="1.5" />
+    <text x="600" y="20" font-family="sans-serif" font-size="10" font-weight="bold" fill="#4c1d95" text-anchor="middle">Human-in-the-Loop (HITL)</text>
+    <text x="600" y="36" font-family="sans-serif" font-size="9" fill="#334155" text-anchor="middle">Mitigación Falsos Positivos</text>
+    <text x="600" y="51" font-family="sans-serif" font-size="9" fill="#334155" text-anchor="middle">Elección: Total/4x/Caras/Orig</text>
+
+    <rect x="695" y="0" width="175" height="70" rx="6" fill="#f5f3ff" stroke="#8b5cf6" stroke-width="1.5" />
+    <text x="782" y="20" font-family="sans-serif" font-size="10" font-weight="bold" fill="#4c1d95" text-anchor="middle">Monitoreo y Drift</text>
+    <text x="782" y="36" font-family="sans-serif" font-size="9" fill="#334155" text-anchor="middle">KPIs Aceptación por Modelo</text>
+    <text x="782" y="51" font-family="sans-serif" font-size="9" fill="#334155" text-anchor="middle">Model Swap vía .env</text>
+  </g>
+
+  <!-- FILA 3: DLM (GESTIÓN DEL DATO) -->
+  <g transform="translate(20, 254)">
+    <rect width="145" height="70" rx="8" fill="#059669" />
+    <text x="72" y="28" font-family="sans-serif" font-size="11.5" font-weight="bold" fill="#ffffff" text-anchor="middle">CICLO DLM</text>
+    <text x="72" y="44" font-family="sans-serif" font-size="9.5" fill="#d1fae5" text-anchor="middle">Ciclo de Vida del Dato</text>
+    <text x="72" y="58" font-family="sans-serif" font-size="8.5" fill="#a7f3d0" text-anchor="middle">EDA + EXIF + PII Local</text>
+
+    <!-- Celdas DLM -->
+    <rect x="155" y="0" width="170" height="70" rx="6" fill="#ecfdf5" stroke="#10b981" stroke-width="1.5" />
+    <text x="240" y="20" font-family="sans-serif" font-size="10" font-weight="bold" fill="#065f46" text-anchor="middle">Captura y Metadatos</text>
+    <text x="240" y="36" font-family="sans-serif" font-size="9" fill="#334155" text-anchor="middle">PNG 300 DPI / JPG EXIF</text>
+    <text x="240" y="51" font-family="sans-serif" font-size="9" fill="#334155" text-anchor="middle">Operador + Álbum + Año</text>
+
+    <rect x="335" y="0" width="170" height="70" rx="6" fill="#ecfdf5" stroke="#10b981" stroke-width="1.5" />
+    <text x="420" y="20" font-family="sans-serif" font-size="10" font-weight="bold" fill="#065f46" text-anchor="middle">Almacenam. Efímero</text>
+    <text x="420" y="36" font-family="sans-serif" font-size="9" fill="#334155" text-anchor="middle">Carpeta sesion_activa/ LAN</text>
+    <text x="420" y="51" font-family="sans-serif" font-size="9" fill="#334155" text-anchor="middle">Purga inmediata de platina</text>
+
+    <rect x="515" y="0" width="170" height="70" rx="6" fill="#ecfdf5" stroke="#10b981" stroke-width="1.5" />
+    <text x="600" y="20" font-family="sans-serif" font-size="10" font-weight="bold" fill="#065f46" text-anchor="middle">Enriquecimiento EXIF</text>
+    <text x="600" y="36" font-family="sans-serif" font-size="9" fill="#334155" text-anchor="middle">exiftool: Año Histórico</text>
+    <text x="600" y="51" font-family="sans-serif" font-size="9" fill="#334155" text-anchor="middle">Transparencia Software IA</text>
+
+    <rect x="695" y="0" width="175" height="70" rx="6" fill="#ecfdf5" stroke="#10b981" stroke-width="1.5" />
+    <text x="782" y="20" font-family="sans-serif" font-size="10" font-weight="bold" fill="#065f46" text-anchor="middle">Archivado NAS y Purga</text>
+    <text x="782" y="36" font-family="sans-serif" font-size="9" fill="#334155" text-anchor="middle">rsync SSH a Fotos_escaneadas</text>
+    <text x="782" y="51" font-family="sans-serif" font-size="9" fill="#334155" text-anchor="middle">Destrucción copias locales</text>
+  </g>
+</svg>

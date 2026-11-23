@@ -5,6 +5,7 @@ from functools import lru_cache
 class Settings(BaseSettings):
     BASE_DIR: Path = Path(__file__).parent.parent
     DIR_SESION: Path = BASE_DIR / "sesion_activa"
+    DIR_BKP_ORIGINAL: Path = BASE_DIR / "bkporiginal"
     DIR_IA: Path = BASE_DIR / "ia_engine"
     DIR_SIMULADOR: Path = BASE_DIR / "simulador"
     DIR_STATIC: Path = BASE_DIR / "static"

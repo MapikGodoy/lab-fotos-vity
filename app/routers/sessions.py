@@ -5,6 +5,7 @@ import json
 import datetime
 import os
 import socket
+import shutil
 from pathlib import Path
 
 from app.state import app_state
@@ -43,6 +44,7 @@ def _datos_lote():
 
 def _registrar(operador, album, fecha_historica, fotos,
                aprobadas_orig=0, aprobadas_caras=0, aprobadas_ia=0, aprobadas_comp=0,
+               fotos_respaldo=0,
                parcial=False, cierre=False):
     try:
         with open(ARCHIVO_REGISTRO, "r") as f:
@@ -59,6 +61,7 @@ def _registrar(operador, album, fecha_historica, fotos,
         "aprobadas_caras": aprobadas_caras,
         "aprobadas_ia": aprobadas_ia,
         "aprobadas_completa": aprobadas_comp,
+        "fotos_respaldo": fotos_respaldo,
         "parcial": parcial,
         "cierre": cierre,
         "fecha_carga": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -79,6 +82,56 @@ def _bases_de(fotos):
         elif f.endswith("_completa.png"):
             bases.add(f[:-len("_completa.png")])
     return bases
+
+
+def _respaldar_originales(fotos, lote_nombre, fecha, operador):
+    """
+    Copia las fotos originales de las bases aprobadas a la carpeta local:
+    bkporiginal/[lote_nombre]_[fecha]/{base}_original.png
+    e inyecta metadatos EXIF fotográficos (año histórico, software y operador).
+    Garantiza que la toma original recortada/rotada quede siempre preservada.
+    Retorna la cantidad de fotos respaldadas con éxito.
+    """
+    dir_lote_bkp = settings.DIR_BKP_ORIGINAL / f"{lote_nombre}_{fecha}"
+    dir_lote_bkp.mkdir(parents=True, exist_ok=True)
+    try:
+        os.chmod(str(dir_lote_bkp), 0o777)
+    except Exception:
+        pass
+
+    fecha_exif = f"{fecha}:01:01 12:00:00" if len(fecha) == 4 else f"{fecha} 12:00:00"
+    bases = _bases_de(fotos)
+    archivos_respaldo = []
+
+    for b in bases:
+        orig = settings.DIR_SESION / f"{b}_original.png"
+        if orig.exists() and orig.stat().st_size > 0:
+            dest = dir_lote_bkp / f"{b}_original.png"
+            try:
+                shutil.copy2(str(orig), str(dest))
+                try:
+                    os.chmod(str(dest), 0o666)
+                except Exception:
+                    pass
+                archivos_respaldo.append(str(dest))
+            except Exception as e:
+                print(f"Error copiando respaldo original {orig} a {dest}: {e}")
+
+    if archivos_respaldo:
+        desc = f"Respaldo digitalizacion original (sin IA) - Lote: {lote_nombre} - Operador: {operador}"
+        soft = "Desktopia Lab - Respaldo Original Local"
+        for r_dest in archivos_respaldo:
+            subprocess.run(
+                ["exiftool",
+                 f"-DateTimeOriginal={fecha_exif}",
+                 f"-CreateDate={fecha_exif}",
+                 f"-ImageDescription={desc}",
+                 f"-Software={soft}",
+                 "-overwrite_original", r_dest],
+                check=False
+            )
+
+    return len(archivos_respaldo)
 
 
 def _limpiar_base(base):
@@ -267,6 +320,11 @@ async def enviar_lote():
         raise HTTPException(status_code=400, detail="No hay fotos aprobadas para enviar.")
 
     operador, nombre, fecha = _datos_lote()
+
+    # 1. Respaldo de originales en bkporiginal/ antes de enviar y limpiar
+    cant_respaldo = _respaldar_originales(fotos, nombre, fecha, operador)
+
+    # 2. Envío de las versiones aprobadas al servidor NAS
     if not _enviar_fotos(fotos, nombre, fecha):
         raise HTTPException(status_code=500, detail="Falló el envío al NAS. El álbum sigue abierto.")
 
@@ -286,10 +344,12 @@ async def enviar_lote():
     _registrar(operador, nombre, fecha, len(fotos),
                aprobadas_orig=cant_orig, aprobadas_caras=cant_caras,
                aprobadas_ia=cant_ia, aprobadas_comp=cant_comp,
+               fotos_respaldo=cant_respaldo,
                parcial=True)
     return {
-        "mensaje": f"{len(fotos)} foto(s) enviadas al NAS.",
+        "mensaje": f"{len(fotos)} foto(s) enviadas al NAS ({cant_respaldo} original(es) respaldados en bkporiginal).",
         "enviadas": len(fotos),
+        "respaldadas": cant_respaldo,
         "desglose": {
             "completa": cant_comp,
             "ia": cant_ia,
@@ -313,7 +373,9 @@ async def cerrar_lote():
     cant_caras = 0
     cant_ia = 0
     cant_comp = 0
+    cant_respaldo = 0
     if fotos:
+        cant_respaldo = _respaldar_originales(fotos, lote_nombre, fecha, operador)
         if not _enviar_fotos(fotos, lote_nombre, fecha):
             raise HTTPException(status_code=500, detail="Falló el envío al NAS; el álbum sigue abierto.")
         enviadas_cierre = len(fotos)
@@ -327,6 +389,7 @@ async def cerrar_lote():
     _registrar(operador, lote_nombre, fecha, enviadas_cierre,
                aprobadas_orig=cant_orig, aprobadas_caras=cant_caras,
                aprobadas_ia=cant_ia, aprobadas_comp=cant_comp,
+               fotos_respaldo=cant_respaldo,
                cierre=True)
 
     for f in settings.DIR_SESION.iterdir():
@@ -336,17 +399,26 @@ async def cerrar_lote():
     app_state.cerrar_lote()
 
     if enviadas_cierre:
-        return {"mensaje": f"Álbum cerrado. {enviadas_cierre} foto(s) enviadas en este último envío."}
+        return {"mensaje": f"Álbum cerrado. {enviadas_cierre} foto(s) enviadas al NAS ({cant_respaldo} respaldadas en bkporiginal)."}
     return {"mensaje": "Álbum cerrado."}
 
 
 @router.get("/estadisticas")
 async def obtener_estadisticas():
+    # Conteo de fotos físicas en la carpeta bkporiginal
+    total_fisico_respaldo = 0
+    if settings.DIR_BKP_ORIGINAL.exists():
+        total_fisico_respaldo = sum(
+            1 for p in settings.DIR_BKP_ORIGINAL.rglob("*")
+            if p.is_file() and p.suffix.lower() in (".png", ".jpg", ".jpeg", ".webp")
+        )
+
     if not ARCHIVO_REGISTRO.exists():
         return {
             "resumen_operadores": {},
             "totales_globales": {
                 "total_fotos": 0, "completa": 0, "ia": 0, "caras": 0, "original": 0,
+                "total_respaldo": total_fisico_respaldo,
                 "pct_completa": 0, "pct_ia": 0, "pct_caras": 0, "pct_orig": 0
             },
             "detalle_albumes": []
@@ -364,6 +436,7 @@ async def obtener_estadisticas():
     total_g_caras = 0
     total_g_ia = 0
     total_g_comp = 0
+    total_g_respaldo = 0
 
     for r in registros:
         op = r.get("operador", "?")
@@ -376,6 +449,7 @@ async def obtener_estadisticas():
         caras = r.get("aprobadas_caras", 0)
         ia = r.get("aprobadas_ia", 0)
         comp = r.get("aprobadas_completa", 0)
+        respaldo = r.get("fotos_respaldo", 0)
 
         # Compatibilidad con registros antiguos
         if orig == 0 and caras == 0 and ia == 0 and comp == 0 and fotos > 0:
@@ -386,11 +460,13 @@ async def obtener_estadisticas():
         total_g_caras += caras
         total_g_ia += ia
         total_g_comp += comp
+        total_g_respaldo += respaldo
 
         if op not in resumen:
             resumen[op] = {
                 "albumes_completados": 0,
                 "total_fotos": 0,
+                "fotos_respaldo": 0,
                 "envios_parciales": 0,
                 "aprobadas_completa": 0,
                 "aprobadas_ia": 0,
@@ -398,6 +474,7 @@ async def obtener_estadisticas():
                 "aprobadas_original": 0,
             }
         resumen[op]["total_fotos"] += fotos
+        resumen[op]["fotos_respaldo"] += respaldo
         resumen[op]["aprobadas_completa"] += comp
         resumen[op]["aprobadas_ia"] += ia
         resumen[op]["aprobadas_caras"] += caras
@@ -413,9 +490,12 @@ async def obtener_estadisticas():
             albumes_map[key] = {
                 "operador": op, "album": alb,
                 "fecha": r.get("fecha_historica", ""),
-                "fotos": 0, "cerrado": False,
+                "fotos": 0,
+                "fotos_respaldo": 0,
+                "cerrado": False,
             }
         albumes_map[key]["fotos"] += fotos
+        albumes_map[key]["fotos_respaldo"] += respaldo
         if cierre:
             albumes_map[key]["cerrado"] = True
 
@@ -433,6 +513,7 @@ async def obtener_estadisticas():
         "ia": total_g_ia,
         "caras": total_g_caras,
         "original": total_g_orig,
+        "total_respaldo": max(total_fisico_respaldo, total_g_respaldo),
         "pct_completa": round((total_g_comp / total_g_fotos * 100), 1) if total_g_fotos > 0 else 0,
         "pct_ia": round((total_g_ia / total_g_fotos * 100), 1) if total_g_fotos > 0 else 0,
         "pct_caras": round((total_g_caras / total_g_fotos * 100), 1) if total_g_fotos > 0 else 0,

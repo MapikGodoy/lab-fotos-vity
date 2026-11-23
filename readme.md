@@ -216,9 +216,9 @@ Cada imagen procesada se muestra en una tarjeta interactiva:
 | **Original** | <kbd>0</kbd> | Cuando la fotografía original ya estaba en perfecto estado. |
 | **Descartar** | <kbd>D</kbd> | Elimina y borra la toma si salió cortada, borrosa o duplicada. |
 
-### Paso 5: Sincronización con el NAS
-- **Enviar Lote (Parcial)**: Transfiere al servidor NAS las fotos aprobadas hasta ese momento, pero mantiene el lote abierto para seguir escaneando.
-- **Cerrar Álbum**: Se presiona al terminar el sobre o álbum completo. Sincroniza todas las fotos restantes, suma el puntaje a las estadísticas del operador y deja la mesa lista para el próximo trabajo.
+### Paso 5: Sincronización con el NAS y Respaldo Original Local (`bkporiginal/`)
+- **Enviar Lote (Parcial)**: Transfiere al servidor NAS las fotos aprobadas hasta ese momento, resguardando automáticamente una copia de la toma original (con el recorte, enderezamiento y metadatos EXIF definidos) en `bkporiginal/[Nombre_Album]_[Año]/` como red de seguridad local, manteniendo el lote abierto para continuar.
+- **Cerrar Álbum**: Se presiona al terminar el sobre o álbum completo. Sincroniza todas las fotos restantes al NAS, resguarda sus tomas originales en `bkporiginal/`, suma el registro a las estadísticas del operador y deja la mesa lista para el próximo trabajo.
 
 ---
 
@@ -251,6 +251,7 @@ lab-fotos-vity/
 │   ├── routers/                    # Endpoints modulares (scanning, photos, processing, sessions)
 │   ├── services/                   # Motores de negocio (ai_service, scanner_service, image_processor)
 │   └── utils/                      # Utilidades EXIF, QR móvil y manejo de archivos
+├── bkporiginal/                    # Bóveda de respaldo local de fotos originales (recortadas/rotadas con EXIF)
 ├── gfpgan/                         # Carpeta de pesos GFPGAN (descargados automáticamente)
 ├── ia_engine/                      # Motor y modelos Real-ESRGAN Vulkan (descargados automáticamente)
 ├── manual/                         # Manuales, esquemas e infografías del sistema

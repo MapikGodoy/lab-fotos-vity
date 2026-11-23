@@ -24,10 +24,12 @@ app.include_router(sessions.router)
 # Montar estáticos
 app.mount("/static", StaticFiles(directory=str(settings.DIR_STATIC)), name="static")
 
-# Asegurar directorio de sesión
+# Asegurar directorio de sesión y respaldo local de originales
 settings.DIR_SESION.mkdir(parents=True, exist_ok=True)
+settings.DIR_BKP_ORIGINAL.mkdir(parents=True, exist_ok=True)
 try:
     os.chmod(str(settings.DIR_SESION), 0o777)
+    os.chmod(str(settings.DIR_BKP_ORIGINAL), 0o777)
 except:
     pass
 

@@ -17,6 +17,7 @@ __pycache__/
 desktopia.log
 *.log
 sesion_activa/
+bkporiginal/
 registro_operadores.json
 
 # Carpeta de pruebas pesada no utilizada
